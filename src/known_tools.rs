@@ -41,6 +41,13 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
     "deepai",
     "foocus",
     "fooocus",
+    "gpt-4o",
+    "gpt-4",
+    "gpt image",
+    "openai",
+    "chatgpt",
+    "seedream",
+    "recraft",
 ];
 
 /// Check if a string contains any known AI tool pattern (case-insensitive).

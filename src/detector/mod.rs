@@ -1,6 +1,7 @@
 pub mod c2pa_detector;
 pub mod exif;
 pub mod mp4_metadata;
+pub mod png_text;
 pub mod watermark;
 pub mod xmp;
 
@@ -35,6 +36,7 @@ pub enum SignalSource {
     Exif,
     Watermark,
     Mp4Metadata,
+    PngText,
 }
 
 impl std::fmt::Display for SignalSource {
@@ -45,6 +47,7 @@ impl std::fmt::Display for SignalSource {
             SignalSource::Exif => write!(f, "EXIF"),
             SignalSource::Watermark => write!(f, "WATERMARK"),
             SignalSource::Mp4Metadata => write!(f, "MP4"),
+            SignalSource::PngText => write!(f, "PNG"),
         }
     }
 }
@@ -144,6 +147,18 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
         }
     }
 
+    // PNG text chunk detector
+    if mime_type.as_deref() == Some("image/png") {
+        match png_text::detect(path) {
+            Ok(sigs) => signals.extend(sigs),
+            Err(e) => {
+                if std::env::var("AIC_DEBUG").is_ok() {
+                    eprintln!("  [debug] PNG text: {}", e);
+                }
+            }
+        }
+    }
+
     // EXIF detector
     match exif::detect(path) {
         Ok(sigs) => signals.extend(sigs),
@@ -154,8 +169,9 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
         }
     }
 
-    // Watermark detector — pixel-level analysis (opt-in via --deep)
-    if deep {
+    // Watermark detector — pixel-level analysis
+    // Run if --deep is set OR as automatic fallback when no metadata signals found
+    if deep || signals.is_empty() {
         match watermark::detect(path) {
             Ok(sigs) => signals.extend(sigs),
             Err(e) => {

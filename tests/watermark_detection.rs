@@ -33,14 +33,26 @@ fn clean_image_not_detected_with_deep() {
 }
 
 #[test]
-fn watermark_not_detected_without_deep() {
-    // Without --deep, watermark analysis should not run
+fn watermark_auto_fallback_when_no_metadata() {
+    // Without --deep, watermark analysis runs as fallback when no metadata signals found
     Command::cargo_bin("aic")
         .unwrap()
         .args(["check", "tests/fixtures/watermarked_dwtdct.png"])
         .assert()
-        .code(1)
-        .stdout(predicate::str::contains("No AI-generation signals detected"));
+        .success()
+        .stdout(predicate::str::contains("WATERMARK"));
+}
+
+#[test]
+fn watermark_skipped_when_metadata_found() {
+    // Watermark should not auto-run when metadata signals already exist
+    Command::cargo_bin("aic")
+        .unwrap()
+        .args(["check", "tests/fixtures/ai_xmp.jpg"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("XMP"))
+        .stdout(predicate::str::contains("WATERMARK").not());
 }
 
 #[test]
