@@ -87,8 +87,9 @@ fn cmd_info(info_args: &cli::InfoArgs) -> ExitCode {
     let report = detector::run_all_detectors(path, true);
     let xmp_props = detector::xmp::dump_info(path).unwrap_or_default();
     let exif_fields = detector::exif::dump_info(path).unwrap_or_default();
+    let mp4_meta = detector::mp4_metadata::dump_info(path).unwrap_or_default();
 
-    output::print_info(&report, &xmp_props, &exif_fields);
+    output::print_info(&report, &xmp_props, &exif_fields, &mp4_meta);
 
     ExitCode::from(0)
 }

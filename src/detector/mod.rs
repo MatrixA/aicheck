@@ -1,5 +1,6 @@
 pub mod c2pa_detector;
 pub mod exif;
+pub mod mp4_metadata;
 pub mod watermark;
 pub mod xmp;
 
@@ -33,6 +34,7 @@ pub enum SignalSource {
     Xmp,
     Exif,
     Watermark,
+    Mp4Metadata,
 }
 
 impl std::fmt::Display for SignalSource {
@@ -42,6 +44,7 @@ impl std::fmt::Display for SignalSource {
             SignalSource::Xmp => write!(f, "XMP"),
             SignalSource::Exif => write!(f, "EXIF"),
             SignalSource::Watermark => write!(f, "WATERMARK"),
+            SignalSource::Mp4Metadata => write!(f, "MP4"),
         }
     }
 }
@@ -117,6 +120,16 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
             // C2PA errors are non-fatal (file may just not have a manifest)
             if std::env::var("AIC_DEBUG").is_ok() {
                 eprintln!("  [debug] C2PA: {}", e);
+            }
+        }
+    }
+
+    // MP4 metadata detector (ilst atoms, AIGC labels, SEI watermarks)
+    match mp4_metadata::detect(path) {
+        Ok(sigs) => signals.extend(sigs),
+        Err(e) => {
+            if std::env::var("AIC_DEBUG").is_ok() {
+                eprintln!("  [debug] MP4 Metadata: {}", e);
             }
         }
     }
