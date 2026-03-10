@@ -39,7 +39,9 @@ fn is_ai_source_type(dst: &DigitalSourceType) -> Option<(Confidence, &'static st
 pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     let reader = match Reader::from_file(path) {
         Ok(r) => r,
-        Err(_) => return Ok(vec![]), // No C2PA manifest — not an error
+        Err(c2pa::Error::JumbfNotFound) => return Ok(vec![]),
+        Err(c2pa::Error::UnsupportedType) => return Ok(vec![]),
+        Err(e) => return Err(e.into()),
     };
 
     let mut signals = Vec::new();
