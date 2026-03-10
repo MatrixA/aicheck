@@ -113,7 +113,7 @@ pub fn print_json(reports: &[FileReport]) {
 }
 
 /// Print info dump for a single file.
-pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fields: &[(String, String)]) {
+pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fields: &[(String, String)], mp4_meta: &[(String, String)]) {
     println!("{}", report.path.display().to_string().bold());
     if let Some(mime) = &report.mime_type {
         println!("  Type: {}", mime);
@@ -155,6 +155,15 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
         println!();
     }
 
+    // MP4 Metadata section
+    if !mp4_meta.is_empty() {
+        println!("{}", "=== MP4 Metadata ===".cyan().bold());
+        for (key, val) in mp4_meta {
+            println!("  {}: {}", key, val);
+        }
+        println!();
+    }
+
     // Watermark section
     let wm_signals: Vec<_> = report
         .signals
@@ -172,7 +181,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
         println!();
     }
 
-    if c2pa_signals.is_empty() && xmp_props.is_empty() && exif_fields.is_empty() && wm_signals.is_empty() {
+    if c2pa_signals.is_empty() && xmp_props.is_empty() && exif_fields.is_empty() && mp4_meta.is_empty() && wm_signals.is_empty() {
         println!("{}", "No provenance metadata found.".dimmed());
     }
 }
