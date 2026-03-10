@@ -47,6 +47,23 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
         }
     }
 
+    // Check Make / Model tags for known AI tools (e.g. Ideogram sets Make="Ideogram AI")
+    for tag in &[Tag::Make, Tag::Model] {
+        if let Some(field) = exif.get_field(*tag, In::PRIMARY) {
+            let val = field.display_value().to_string().replace('"', "");
+            if let Some(tool_name) = known_tools::match_ai_tool(&val) {
+                signals.push(Signal {
+                    source: SignalSource::Exif,
+                    confidence: Confidence::Low,
+                    description: format!("{} = \"{}\"", tag, val),
+                    tool: Some(tool_name.to_string()),
+                    details: vec![(tag.to_string(), val)],
+                });
+                software_matched = true;
+            }
+        }
+    }
+
     // Check ImageDescription / UserComment for AI references
     for tag in &[Tag::ImageDescription, Tag::UserComment] {
         if let Some(field) = exif.get_field(*tag, In::PRIMARY) {
@@ -61,6 +78,26 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
                 });
                 software_matched = true;
             }
+        }
+    }
+
+    // Check Artist tag for suspicious patterns (hex hashes suggest AI pipeline)
+    if let Some(field) = exif.get_field(Tag::Artist, In::PRIMARY) {
+        let val = field.display_value().to_string().replace('"', "");
+        let is_hex_hash =
+            val.len() >= 32 && val.chars().all(|c| c.is_ascii_hexdigit() || c == '-');
+        if is_hex_hash {
+            signals.push(Signal {
+                source: SignalSource::Exif,
+                confidence: Confidence::Low,
+                description: format!(
+                    "Artist contains hash-like value ({}...)",
+                    &val[..val.len().min(16)]
+                ),
+                tool: None,
+                details: vec![("Artist".into(), val)],
+            });
+            software_matched = true;
         }
     }
 
