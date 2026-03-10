@@ -155,7 +155,24 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
         println!();
     }
 
-    if c2pa_signals.is_empty() && xmp_props.is_empty() && exif_fields.is_empty() {
+    // Watermark section
+    let wm_signals: Vec<_> = report
+        .signals
+        .iter()
+        .filter(|s| matches!(s.source, crate::detector::SignalSource::Watermark))
+        .collect();
+    if !wm_signals.is_empty() {
+        println!("{}", "=== Watermark Analysis ===".cyan().bold());
+        for signal in &wm_signals {
+            println!("  {}", signal.description);
+            for (key, val) in &signal.details {
+                println!("    {}: {}", key.dimmed(), val);
+            }
+        }
+        println!();
+    }
+
+    if c2pa_signals.is_empty() && xmp_props.is_empty() && exif_fields.is_empty() && wm_signals.is_empty() {
         println!("{}", "No provenance metadata found.".dimmed());
     }
 }

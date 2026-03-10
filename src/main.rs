@@ -45,7 +45,7 @@ fn cmd_check(args: &Cli, check_args: &cli::CheckArgs) -> ExitCode {
     let reports: Vec<_> = files
         .iter()
         .map(|f| {
-            let mut report = detector::run_all_detectors(f);
+            let mut report = detector::run_all_detectors(f, check_args.deep);
             // Filter signals below min confidence
             report.signals.retain(|s| s.confidence >= min_confidence);
             // Recompute overall confidence after filtering
@@ -84,7 +84,7 @@ fn cmd_info(info_args: &cli::InfoArgs) -> ExitCode {
         return ExitCode::from(2);
     }
 
-    let report = detector::run_all_detectors(path);
+    let report = detector::run_all_detectors(path, true);
     let xmp_props = detector::xmp::dump_info(path).unwrap_or_default();
     let exif_fields = detector::exif::dump_info(path).unwrap_or_default();
 

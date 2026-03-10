@@ -13,6 +13,7 @@ anyhow = "1"
 c2pa = { version = "0.67", features = ["file_io"] }
 clap = { version = "4", features = ["derive"] }
 colored = "2"
+image = { version = "0.24", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp", "tiff"] }
 infer = "0.19"
 kamadak-exif = "0.6"
 serde = { version = "1", features = ["derive"] }

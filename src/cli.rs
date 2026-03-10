@@ -45,6 +45,10 @@ pub struct CheckArgs {
     /// Minimum confidence level to report
     #[arg(long, value_enum, default_value = "low")]
     pub min_confidence: ConfidenceFilter,
+
+    /// Enable deep pixel analysis (invisible watermark detection)
+    #[arg(long)]
+    pub deep: bool,
 }
 
 #[derive(clap::Args)]
