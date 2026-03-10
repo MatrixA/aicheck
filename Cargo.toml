@@ -1,0 +1,26 @@
+[package]
+name = "aicheck"
+version = "0.1.0"
+edition = "2021"
+description = "Detect AI-generated content via provenance signals (C2PA, XMP/IPTC, EXIF)"
+
+[[bin]]
+name = "aic"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+c2pa = { version = "0.67", features = ["file_io"] }
+clap = { version = "4", features = ["derive"] }
+colored = "2"
+infer = "0.19"
+kamadak-exif = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+walkdir = "2"
+quick-xml = "0.36"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
