@@ -1,16 +1,14 @@
 > [English](README.md) | **简体中文**
 
-```
-    _    ___ ____ _               _
-   / \  |_ _/ ___| |__   ___  ___| | __
-  / _ \  | | |   | '_ \ / _ \/ __| |/ /
- / ___ \ | | |___| | | |  __/ (__|   <
-/_/   \_\___\____|_| |_|\___|\___|_|\_\
-```
+# AICheck
 
-**读取文件自带的「身份信息」，判断它是不是 AI 生成的。**
+*那张疯传的图片——是AI还是真的？*
+*这个视频是用哪个模型生成的？*
+*这张照片的元数据可信吗？*
 
-**41 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
+AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需要 API key，不需要联网，不需要配置。
+
+**6 种检测方法** · **39 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
 
 ---
 
@@ -37,37 +35,46 @@ real_photo.jpg
   No AI-generation signals detected.
 ```
 
-就这么简单。不需要 API key，不需要联网，不需要额外配置。
-
 ---
 
 ## 工作原理
 
 ```
-                     你的文件
-                        |
-                        v
-                +-------+-------+
-                |               |
-                v               v
-         [ C2PA 清单 ]     [ 原始字节 ]
-         置信度: HIGH          |
-                               +--------+--------+
-                               |                  |
-                               v                  v
-                        [ XMP / IPTC ]       [ EXIF 标签 ]
-                        置信度: MEDIUM       置信度: LOW
-                               |                  |
-                               +--------+---------+
-                                        |
-                                        v
-                                    [ 判定 ]
-                              AI / 非 AI / 错误
+                       你的文件
+                          |
+          +-------+-------+-------+-------+
+          |       |       |       |       |
+          v       v       v       v       v
+      [ C2PA ] [XMP/IPTC] [EXIF] [PNG]  [MP4]
+       HIGH    MEDIUM     LOW    LOW    MEDIUM
+          |       |       |       |       |
+          +---+---+---+---+---+---+---+---+
+              |                       |
+              v                       v
+      检测到元数据信号?          没有信号?
+              |                       |
+              v                       v
+          [ 判定 ]            [ 隐形水印检测 ]
+                              DWT-DCT 分析
+                              置信度: LOW
+                                    |
+                                    v
+                                [ 判定 ]
 ```
 
-- **C2PA（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这基本就是元数据里最权威的证据了。读取 `digitalSourceType` 和 `claim_generator` 字段。
-- **XMP/IPTC（MEDIUM 置信度）**— 标准的照片元数据字段：`DigitalSourceType`、`AISystemUsed`、`CreatorTool`。可靠但没有签名——可以伪造或删除。
-- **EXIF（LOW 置信度）**— 启发式判断：如果 `Software` 标签匹配已知 AI 工具，且缺少典型的相机字段（Make、Model、GPS），那大概率是 AI 生成的。
+### 检测方法
+
+**C2PA 清单（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这就是元数据能提供的最权威证据。读取 `digitalSourceType` 和 `claim_generator` 字段。支持图片和视频。
+
+**XMP/IPTC 元数据（MEDIUM 置信度）**— 标准照片元数据：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`。可靠但没有签名——可以伪造或删除。
+
+**MP4 容器元数据（MEDIUM 置信度）**— 解析 iTunes 风格原子（`©too`、`©swr`）、AIGC 标签（中国标准，含 JSON `ProduceID`）和 H.264 SEI 水印标记（如 Kling）。能捕获嵌入视频容器中的 AI 信号。
+
+**EXIF 启发式（LOW 置信度）**— 如果 `Software` 标签匹配已知 AI 工具，且缺少典型的相机字段（Make、Model、GPS、焦距），那大概率是 AI 生成的。也能检测哈希式的 Artist 标签。
+
+**PNG 文本块（LOW 置信度）**— 扫描 `tEXt` 和 `iTXt` 块中 Software、Comment、Description、Source、Author、parameters、prompt 等关键字里的 AI 工具引用。
+
+**隐形水印（LOW 置信度）**— 像素级 DWT-DCT 分析，检测通道噪声不对称性、跨通道比特一致性和小波能量模式。当未检测到元数据信号时自动运行，也可通过 `--deep` 强制启用。
 
 ---
 
@@ -78,10 +85,11 @@ real_photo.jpg
 | 类别 | 工具 |
 |------|------|
 | 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| 视频生成 | Sora, Veo, Runway, Pika |
+| 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu |
+| 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
 | 平台 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 界面工具 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
-| 研究项目 | Glide, Parti, Muse |
+| 研究项目 | Glide, Parti, Muse, Seedream, Recraft |
 
 ### 文件格式
 
@@ -106,11 +114,12 @@ aic check images/ -r                      # 目录，递归扫描
 aic check photo.jpg --json                # JSON 输出
 aic check photo.jpg -q                    # 静默模式——仅返回退出码
 aic check photo.jpg --min-confidence medium  # 按置信度过滤
+aic check photo.jpg --deep                # 强制启用像素级水印分析
 ```
 
 ### `aic info <FILE>`
 
-输出所有溯源元数据（C2PA 清单、XMP 属性、EXIF 字段）。
+输出所有溯源元数据（C2PA 清单、XMP 属性、EXIF 字段、MP4 原子、水印分析）。
 
 ```bash
 aic info photo.jpg
@@ -122,6 +131,7 @@ aic info photo.jpg
 |------|------|
 | `--json` | 以 JSON 格式输出 |
 | `-q, --quiet` | 不输出内容，仅设置退出码 |
+| `--deep` | 强制对所有文件进行隐形水印分析 |
 | `--no-color` | 禁用彩色输出 |
 
 ### 退出码
@@ -139,7 +149,7 @@ aic info photo.jpg
 - **元数据被删了就没辙。** 如果有人把元数据剥掉了，那就没有可检测的内容。社交平台上传时会自动做这件事——请分析原始文件。
 - **大多数 AI 图片没有水印。** 仅约 19% 的 AI 图片携带可检测的来源标记（2025 年数据）。
 - **专有水印无法识别。** SynthID、Stable Signature、VideoSeal 需要我们没有的密钥。
-- **这不是像素级检测工具。** 它读的是元数据，不是像素。像素层面的统计检测请使用专业的取证工具。
+- **像素级分析有局限。** 内置的 DWT-DCT 水印检测器能捕获常见模式，但不是完整的取证分类器。深度统计检测请使用专业取证工具。
 
 ---
 
