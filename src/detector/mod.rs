@@ -1,5 +1,6 @@
 pub mod c2pa_detector;
 pub mod exif;
+pub mod watermark;
 pub mod xmp;
 
 use serde::Serialize;
@@ -31,6 +32,7 @@ pub enum SignalSource {
     C2pa,
     Xmp,
     Exif,
+    Watermark,
 }
 
 impl std::fmt::Display for SignalSource {
@@ -39,6 +41,7 @@ impl std::fmt::Display for SignalSource {
             SignalSource::C2pa => write!(f, "C2PA"),
             SignalSource::Xmp => write!(f, "XMP"),
             SignalSource::Exif => write!(f, "EXIF"),
+            SignalSource::Watermark => write!(f, "WATERMARK"),
         }
     }
 }
@@ -98,7 +101,8 @@ impl FileReport {
 }
 
 /// Run all detectors on a file and return a combined report.
-pub fn run_all_detectors(path: &Path) -> FileReport {
+/// When `deep` is true, also runs pixel-level watermark analysis.
+pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
     let mime_type = infer::get_from_path(path)
         .ok()
         .flatten()
@@ -133,6 +137,18 @@ pub fn run_all_detectors(path: &Path) -> FileReport {
         Err(e) => {
             if std::env::var("AIC_DEBUG").is_ok() {
                 eprintln!("  [debug] EXIF: {}", e);
+            }
+        }
+    }
+
+    // Watermark detector — pixel-level analysis (opt-in via --deep)
+    if deep {
+        match watermark::detect(path) {
+            Ok(sigs) => signals.extend(sigs),
+            Err(e) => {
+                if std::env::var("AIC_DEBUG").is_ok() {
+                    eprintln!("  [debug] Watermark: {}", e);
+                }
             }
         }
     }
