@@ -3,6 +3,11 @@ name = "aicheck"
 version = "0.1.0"
 edition = "2021"
 description = "Detect AI-generated content via provenance signals (C2PA, XMP/IPTC, EXIF)"
+license = "MIT"
+repository = "https://github.com/MatrixA/aicheck"
+homepage = "https://github.com/MatrixA/aicheck"
+keywords = ["ai-detection", "c2pa", "watermark", "metadata", "forensics"]
+categories = ["command-line-utilities", "multimedia"]
 
 [[bin]]
 name = "aic"

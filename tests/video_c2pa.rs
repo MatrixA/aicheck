@@ -1,10 +1,9 @@
-use assert_cmd::Command;
+use assert_cmd::cargo_bin_cmd;
 use predicates::prelude::*;
 
 #[test]
 fn mp4_with_c2pa_is_detected() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "tests/fixtures/ai_c2pa.mp4"])
         .assert()
         .success() // exit 0 = AI detected
@@ -14,8 +13,7 @@ fn mp4_with_c2pa_is_detected() {
 
 #[test]
 fn mp4_with_c2pa_json_output() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["--json", "check", "tests/fixtures/ai_c2pa.mp4"])
         .assert()
         .success()
@@ -25,8 +23,7 @@ fn mp4_with_c2pa_json_output() {
 
 #[test]
 fn mp4_without_c2pa_not_detected() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "tests/fixtures/no_c2pa.mp4"])
         .assert()
         .code(1) // exit 1 = no AI detected
@@ -35,8 +32,7 @@ fn mp4_without_c2pa_not_detected() {
 
 #[test]
 fn mp4_info_shows_c2pa_manifest() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["info", "tests/fixtures/ai_c2pa.mp4"])
         .assert()
         .success();

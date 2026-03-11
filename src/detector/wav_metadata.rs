@@ -41,6 +41,7 @@ fn parse_wav(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>)> {
     Some((fmt, info))
 }
 
+#[allow(clippy::type_complexity)]
 fn parse_wav_inner(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>, usize, usize)> {
     // Minimum: RIFF(4) + size(4) + WAVE(4) + fmt chunk header(8) + fmt data(16) = 36
     if data.len() < 36 {

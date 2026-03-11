@@ -138,8 +138,8 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
 
                 for i in 0..3 {
                     for j in (i + 1)..3 {
-                        for k in 0..min_len {
-                            if channel_bits[i][k] == channel_bits[j][k] {
+                        for (bi, bj) in channel_bits[i].iter().zip(channel_bits[j].iter()).take(min_len) {
+                            if bi == bj {
                                 total_agree += 1;
                             }
                             total_compared += 1;
@@ -295,7 +295,7 @@ fn estimate_noise_level(channel: &[f64], width: usize, height: usize) -> f64 {
         return 0.0;
     }
 
-    laplacian_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    laplacian_values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     let median = laplacian_values[laplacian_values.len() / 2];
     median / 0.6745
 }
@@ -357,8 +357,8 @@ fn apply_2d_dct_ortho(block: &mut [f64], size: usize) {
         let input: Vec<f64> = block[start..start + size].to_vec();
         for k in 0..size {
             let mut sum = 0.0;
-            for i in 0..size {
-                sum += input[i]
+            for (i, val) in input.iter().enumerate() {
+                sum += val
                     * (std::f64::consts::PI * (2.0 * i as f64 + 1.0) * k as f64 / (2.0 * n))
                         .cos();
             }
@@ -376,8 +376,8 @@ fn apply_2d_dct_ortho(block: &mut [f64], size: usize) {
         let input: Vec<f64> = (0..size).map(|row| block[row * size + col]).collect();
         for k in 0..size {
             let mut sum = 0.0;
-            for i in 0..size {
-                sum += input[i]
+            for (i, val) in input.iter().enumerate() {
+                sum += val
                     * (std::f64::consts::PI * (2.0 * i as f64 + 1.0) * k as f64 / (2.0 * n))
                         .cos();
             }

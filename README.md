@@ -15,6 +15,12 @@ AICheck answers these questions by analyzing file metadata and invisible waterma
 ## Quick Start
 
 ```bash
+cargo install aicheck
+```
+
+Or build from source:
+
+```bash
 cargo install --path .
 ```
 
