@@ -82,11 +82,13 @@ pub fn print_human(reports: &[FileReport]) {
             };
             format!(
                 "  Verdict: {} (confidence: {})",
-                label,
-                report.overall_confidence
+                label, report.overall_confidence
             )
         } else {
-            format!("  Verdict: {}", i18n::t("verdict_not_detected", &[]).green())
+            format!(
+                "  Verdict: {}",
+                i18n::t("verdict_not_detected", &[]).green()
+            )
         };
         println!("{}", verdict);
     }
@@ -119,15 +121,28 @@ pub fn print_json(reports: &[FileReport]) {
     };
     match serde_json::to_string_pretty(&output) {
         Ok(json) => println!("{}", json),
-        Err(e) => eprintln!("{}", i18n::t("error_json_serialize", &[("err", &e.to_string())])),
+        Err(e) => eprintln!(
+            "{}",
+            i18n::t("error_json_serialize", &[("err", &e.to_string())])
+        ),
     }
 }
 
 /// Print info dump for a single file.
-pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fields: &[(String, String)], mp4_meta: &[(String, String)], id3_tags: &[(String, String)], wav_meta: &[(String, String)]) {
+pub fn print_info(
+    report: &FileReport,
+    xmp_props: &[(String, String)],
+    exif_fields: &[(String, String)],
+    mp4_meta: &[(String, String)],
+    id3_tags: &[(String, String)],
+    wav_meta: &[(String, String)],
+) {
     println!("{}", report.path.display().to_string().bold());
     if let Some(mime) = &report.mime_type {
-        println!("  {}", i18n::t("output_type_label", &[("mime", mime.as_str())]));
+        println!(
+            "  {}",
+            i18n::t("output_type_label", &[("mime", mime.as_str())])
+        );
     }
     println!();
 
@@ -210,7 +225,14 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
         println!();
     }
 
-    if c2pa_signals.is_empty() && xmp_props.is_empty() && exif_fields.is_empty() && mp4_meta.is_empty() && id3_tags.is_empty() && wav_meta.is_empty() && wm_signals.is_empty() {
+    if c2pa_signals.is_empty()
+        && xmp_props.is_empty()
+        && exif_fields.is_empty()
+        && mp4_meta.is_empty()
+        && id3_tags.is_empty()
+        && wav_meta.is_empty()
+        && wm_signals.is_empty()
+    {
         println!("{}", i18n::t("info_no_metadata", &[]).dimmed());
     }
 }

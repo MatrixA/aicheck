@@ -95,7 +95,14 @@ fn cmd_info(info_args: &cli::InfoArgs) -> ExitCode {
     let id3_tags = detector::id3_metadata::dump_info(path).unwrap_or_default();
     let wav_meta = detector::wav_metadata::dump_info(path).unwrap_or_default();
 
-    output::print_info(&report, &xmp_props, &exif_fields, &mp4_meta, &id3_tags, &wav_meta);
+    output::print_info(
+        &report,
+        &xmp_props,
+        &exif_fields,
+        &mp4_meta,
+        &id3_tags,
+        &wav_meta,
+    );
 
     ExitCode::from(0)
 }

@@ -2,13 +2,16 @@ use anyhow::Result;
 use std::fs;
 use std::path::Path;
 
-use super::{Confidence, SignalBuilder, Signal, SignalSource};
+use super::{Confidence, Signal, SignalBuilder, SignalSource};
 use crate::known_tools;
 
 /// IPTC DigitalSourceType URIs/names that indicate AI generation.
 const AI_SOURCE_TYPES: &[(&str, &str)] = &[
     ("trainedAlgorithmicMedia", "trainedAlgorithmicMedia"),
-    ("compositeWithTrainedAlgorithmicMedia", "compositeWithTrainedAlgorithmicMedia"),
+    (
+        "compositeWithTrainedAlgorithmicMedia",
+        "compositeWithTrainedAlgorithmicMedia",
+    ),
     ("algorithmicMedia", "algorithmicMedia"),
     ("compositeSynthetic", "compositeSynthetic"),
     ("dataDrivenMedia", "dataDrivenMedia"),
@@ -110,10 +113,14 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
         for (name, pattern) in AI_SOURCE_TYPES {
             if value.contains(pattern) {
                 signals.push(
-                    SignalBuilder::new(SignalSource::Xmp, Confidence::Medium, "signal_xmp_digital_source_type")
-                        .param("value", *name)
-                        .detail("DigitalSourceType", &value)
-                        .build(),
+                    SignalBuilder::new(
+                        SignalSource::Xmp,
+                        Confidence::Medium,
+                        "signal_xmp_digital_source_type",
+                    )
+                    .param("value", *name)
+                    .detail("DigitalSourceType", &value)
+                    .build(),
                 );
                 break;
             }
@@ -123,30 +130,42 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     if let Some(value) = extract_property(&xml, "AISystemUsed") {
         let tool = known_tools::match_ai_tool(&value).map(|s| s.to_string());
         signals.push(
-            SignalBuilder::new(SignalSource::Xmp, Confidence::Medium, "signal_xmp_ai_system_used")
-                .param("value", &value)
-                .tool_opt(tool)
-                .detail("AISystemUsed", &value)
-                .build(),
+            SignalBuilder::new(
+                SignalSource::Xmp,
+                Confidence::Medium,
+                "signal_xmp_ai_system_used",
+            )
+            .param("value", &value)
+            .tool_opt(tool)
+            .detail("AISystemUsed", &value)
+            .build(),
         );
     }
 
     if let Some(value) = extract_property(&xml, "AIPromptInformation") {
         signals.push(
-            SignalBuilder::new(SignalSource::Xmp, Confidence::Medium, "signal_xmp_ai_prompt")
-                .detail("AIPromptInformation", &value)
-                .build(),
+            SignalBuilder::new(
+                SignalSource::Xmp,
+                Confidence::Medium,
+                "signal_xmp_ai_prompt",
+            )
+            .detail("AIPromptInformation", &value)
+            .build(),
         );
     }
 
     if let Some(value) = extract_property(&xml, "CreatorTool") {
         if let Some(tool_name) = known_tools::match_ai_tool(&value) {
             signals.push(
-                SignalBuilder::new(SignalSource::Xmp, Confidence::Medium, "signal_xmp_creator_tool")
-                    .param("value", &value)
-                    .tool(tool_name)
-                    .detail("CreatorTool", &value)
-                    .build(),
+                SignalBuilder::new(
+                    SignalSource::Xmp,
+                    Confidence::Medium,
+                    "signal_xmp_creator_tool",
+                )
+                .param("value", &value)
+                .tool(tool_name)
+                .detail("CreatorTool", &value)
+                .build(),
             );
         }
     }

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::path::Path;
 
-use super::{Confidence, SignalBuilder, Signal, SignalSource};
+use super::{Confidence, Signal, SignalBuilder, SignalSource};
 
 /// Known filename patterns from AI audio/media generation tools.
 const FILENAME_PATTERNS: &[(&str, &str)] = &[
@@ -32,11 +32,15 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     for &(pattern, tool_name) in FILENAME_PATTERNS {
         if lower.contains(pattern) {
             signals.push(
-                SignalBuilder::new(SignalSource::Filename, Confidence::Low, "signal_filename_pattern")
-                    .param("pattern", pattern)
-                    .tool(tool_name)
-                    .detail("filename", filename)
-                    .build(),
+                SignalBuilder::new(
+                    SignalSource::Filename,
+                    Confidence::Low,
+                    "signal_filename_pattern",
+                )
+                .param("pattern", pattern)
+                .tool(tool_name)
+                .detail("filename", filename)
+                .build(),
             );
             break;
         }
@@ -44,10 +48,14 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
 
     if signals.is_empty() && detect_elevenlabs_pattern(&lower) {
         signals.push(
-            SignalBuilder::new(SignalSource::Filename, Confidence::Low, "signal_filename_elevenlabs")
-                .tool("elevenlabs")
-                .detail("filename", filename)
-                .build(),
+            SignalBuilder::new(
+                SignalSource::Filename,
+                Confidence::Low,
+                "signal_filename_elevenlabs",
+            )
+            .tool("elevenlabs")
+            .detail("filename", filename)
+            .build(),
         );
     }
 
@@ -63,7 +71,11 @@ fn detect_elevenlabs_pattern(lower: &str) -> bool {
         return false;
     }
     let bytes = rest.as_bytes();
-    bytes[4] == b'-' && bytes[7] == b'-' && bytes[10] == b't' && bytes[13] == b'_' && bytes[16] == b'_'
+    bytes[4] == b'-'
+        && bytes[7] == b'-'
+        && bytes[10] == b't'
+        && bytes[13] == b'_'
+        && bytes[16] == b'_'
 }
 
 #[cfg(test)]
@@ -105,7 +117,9 @@ mod tests {
 
     #[test]
     fn test_elevenlabs_pattern_detection() {
-        assert!(detect_elevenlabs_pattern("elevenlabs_2026-03-11t04_15_43_something"));
+        assert!(detect_elevenlabs_pattern(
+            "elevenlabs_2026-03-11t04_15_43_something"
+        ));
         assert!(!detect_elevenlabs_pattern("elevenlabs_short"));
         assert!(!detect_elevenlabs_pattern("something_else"));
     }

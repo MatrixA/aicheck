@@ -21,8 +21,9 @@ jobs:
           lfs: true
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt -- --check
       - run: cargo clippy -- -D warnings
       - run: cargo test
       - run: cargo build --release
