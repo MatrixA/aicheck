@@ -1,10 +1,9 @@
-use assert_cmd::Command;
+use assert_cmd::cargo_bin_cmd;
 use predicates::prelude::*;
 
 #[test]
 fn watermarked_dwtdct_detected_with_deep() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "--deep", "tests/fixtures/watermarked_dwtdct.png"])
         .assert()
         .success() // exit 0 = AI detected
@@ -14,8 +13,7 @@ fn watermarked_dwtdct_detected_with_deep() {
 
 #[test]
 fn watermarked_dwtdctsvd_detected_with_deep() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "--deep", "tests/fixtures/watermarked_dwtdctsvd.png"])
         .assert()
         .success()
@@ -24,8 +22,7 @@ fn watermarked_dwtdctsvd_detected_with_deep() {
 
 #[test]
 fn clean_image_not_detected_with_deep() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "--deep", "tests/fixtures/clean_synthetic.png"])
         .assert()
         .code(1) // exit 1 = no AI detected
@@ -35,8 +32,7 @@ fn clean_image_not_detected_with_deep() {
 #[test]
 fn watermark_auto_fallback_when_no_metadata() {
     // Without --deep, watermark analysis runs as fallback when no metadata signals found
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "tests/fixtures/watermarked_dwtdct.png"])
         .assert()
         .success()
@@ -46,8 +42,7 @@ fn watermark_auto_fallback_when_no_metadata() {
 #[test]
 fn watermark_skipped_when_metadata_found() {
     // Watermark should not auto-run when metadata signals already exist
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "tests/fixtures/ai_xmp.jpg"])
         .assert()
         .success()
@@ -57,8 +52,7 @@ fn watermark_skipped_when_metadata_found() {
 
 #[test]
 fn watermarked_json_output() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args([
             "--json",
             "check",
@@ -73,8 +67,7 @@ fn watermarked_json_output() {
 
 #[test]
 fn watermark_info_command() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["info", "tests/fixtures/watermarked_dwtdct.png"])
         .assert()
         .success()

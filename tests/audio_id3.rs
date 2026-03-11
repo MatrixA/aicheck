@@ -1,10 +1,9 @@
-use assert_cmd::Command;
+use assert_cmd::cargo_bin_cmd;
 use predicates::prelude::*;
 
 #[test]
 fn suno_mp3_detected_as_ai() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["check", "tests/fixtures/ai_suno.mp3"])
         .assert()
         .success() // exit 0 = AI detected
@@ -14,8 +13,7 @@ fn suno_mp3_detected_as_ai() {
 
 #[test]
 fn suno_mp3_json_output() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["--json", "check", "tests/fixtures/ai_suno.mp3"])
         .assert()
         .success()
@@ -25,8 +23,7 @@ fn suno_mp3_json_output() {
 
 #[test]
 fn suno_mp3_info_shows_id3_tags() {
-    Command::cargo_bin("aic")
-        .unwrap()
+    cargo_bin_cmd!("aic")
         .args(["info", "tests/fixtures/ai_suno.mp3"])
         .assert()
         .success()

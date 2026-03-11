@@ -109,7 +109,10 @@ pub fn print_json(reports: &[FileReport]) {
         summary: make_summary(reports),
         files: reports,
     };
-    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+    match serde_json::to_string_pretty(&output) {
+        Ok(json) => println!("{}", json),
+        Err(e) => eprintln!("Error: failed to serialize JSON: {}", e),
+    }
 }
 
 /// Print info dump for a single file.
