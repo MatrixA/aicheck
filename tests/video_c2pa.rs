@@ -27,7 +27,9 @@ fn mp4_without_c2pa_not_detected() {
         .args(["--lang", "en", "check", "tests/fixtures/no_c2pa.mp4"])
         .assert()
         .code(1) // exit 1 = no AI detected
-        .stdout(predicate::str::contains("No AI-generation signals detected"));
+        .stdout(predicate::str::contains(
+            "No AI-generation signals detected",
+        ));
 }
 
 #[test]

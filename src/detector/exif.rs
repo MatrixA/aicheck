@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-use super::{Confidence, SignalBuilder, Signal, SignalSource};
+use super::{Confidence, Signal, SignalBuilder, SignalSource};
 use crate::known_tools;
 
 /// Camera-specific EXIF tags that real photos typically have.
@@ -53,12 +53,16 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
             let val = field.display_value().to_string().replace('"', "");
             if let Some(tool_name) = known_tools::match_ai_tool(&val) {
                 signals.push(
-                    SignalBuilder::new(SignalSource::Exif, Confidence::Low, "signal_exif_tag_value")
-                        .param("tag", tag.to_string())
-                        .param("value", &val)
-                        .tool(tool_name)
-                        .detail(tag.to_string(), &val)
-                        .build(),
+                    SignalBuilder::new(
+                        SignalSource::Exif,
+                        Confidence::Low,
+                        "signal_exif_tag_value",
+                    )
+                    .param("tag", tag.to_string())
+                    .param("value", &val)
+                    .tool(tool_name)
+                    .detail(tag.to_string(), &val)
+                    .build(),
                 );
                 software_matched = true;
             }
@@ -71,11 +75,15 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
             let val = field.display_value().to_string().replace('"', "");
             if let Some(tool_name) = known_tools::match_ai_tool(&val) {
                 signals.push(
-                    SignalBuilder::new(SignalSource::Exif, Confidence::Low, "signal_exif_tag_references_ai")
-                        .param("tag", tag.to_string())
-                        .tool(tool_name)
-                        .detail(tag.to_string(), &val)
-                        .build(),
+                    SignalBuilder::new(
+                        SignalSource::Exif,
+                        Confidence::Low,
+                        "signal_exif_tag_references_ai",
+                    )
+                    .param("tag", tag.to_string())
+                    .tool(tool_name)
+                    .detail(tag.to_string(), &val)
+                    .build(),
                 );
                 software_matched = true;
             }
@@ -85,15 +93,18 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     // Check Artist tag for suspicious patterns
     if let Some(field) = exif.get_field(Tag::Artist, In::PRIMARY) {
         let val = field.display_value().to_string().replace('"', "");
-        let is_hex_hash =
-            val.len() >= 32 && val.chars().all(|c| c.is_ascii_hexdigit() || c == '-');
+        let is_hex_hash = val.len() >= 32 && val.chars().all(|c| c.is_ascii_hexdigit() || c == '-');
         if is_hex_hash {
             let prefix = &val[..val.len().min(16)];
             signals.push(
-                SignalBuilder::new(SignalSource::Exif, Confidence::Low, "signal_exif_artist_hash")
-                    .param("value", prefix)
-                    .detail("Artist", &val)
-                    .build(),
+                SignalBuilder::new(
+                    SignalSource::Exif,
+                    Confidence::Low,
+                    "signal_exif_artist_hash",
+                )
+                .param("value", prefix)
+                .detail("Artist", &val)
+                .build(),
             );
             software_matched = true;
         }
@@ -128,10 +139,7 @@ pub fn dump_info(path: &Path) -> Result<Vec<(String, String)>> {
 
     let mut fields = Vec::new();
     for field in exif.fields() {
-        fields.push((
-            format!("{}", field.tag),
-            field.display_value().to_string(),
-        ));
+        fields.push((format!("{}", field.tag), field.display_value().to_string()));
     }
     Ok(fields)
 }

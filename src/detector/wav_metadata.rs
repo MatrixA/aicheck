@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::fs;
 use std::path::Path;
 
-use super::{Confidence, SignalBuilder, Signal, SignalSource};
+use super::{Confidence, Signal, SignalBuilder, SignalSource};
 use crate::known_tools;
 
 /// TTS-typical sample rates.
@@ -24,7 +24,12 @@ pub(crate) struct WavFile {
 
 pub(crate) fn parse_wav_full(data: &[u8]) -> Option<WavFile> {
     let (fmt, info_entries, pcm_start, pcm_end) = parse_wav_inner(data)?;
-    Some(WavFile { fmt, info_entries, pcm_start, pcm_end })
+    Some(WavFile {
+        fmt,
+        info_entries,
+        pcm_start,
+        pcm_end,
+    })
 }
 
 fn parse_wav(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>)> {
@@ -34,8 +39,12 @@ fn parse_wav(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>)> {
 
 #[allow(clippy::type_complexity)]
 fn parse_wav_inner(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>, usize, usize)> {
-    if data.len() < 36 { return None; }
-    if &data[0..4] != b"RIFF" || &data[8..12] != b"WAVE" { return None; }
+    if data.len() < 36 {
+        return None;
+    }
+    if &data[0..4] != b"RIFF" || &data[8..12] != b"WAVE" {
+        return None;
+    }
 
     let mut fmt = None;
     let mut info_entries = Vec::new();
@@ -45,7 +54,9 @@ fn parse_wav_inner(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>, usize,
 
     while pos + 8 <= data.len() {
         let chunk_id = &data[pos..pos + 4];
-        let chunk_size = u32::from_le_bytes([data[pos+4], data[pos+5], data[pos+6], data[pos+7]]) as usize;
+        let chunk_size =
+            u32::from_le_bytes([data[pos + 4], data[pos + 5], data[pos + 6], data[pos + 7]])
+                as usize;
         let chunk_data_start = pos + 8;
         let chunk_data_end = (chunk_data_start + chunk_size).min(data.len());
 
@@ -64,13 +75,24 @@ fn parse_wav_inner(data: &[u8]) -> Option<(WavFmt, Vec<(String, String)>, usize,
             if list_type == b"INFO" {
                 let mut sub_pos = chunk_data_start + 4;
                 while sub_pos + 8 <= chunk_data_end {
-                    let sub_id = std::str::from_utf8(&data[sub_pos..sub_pos + 4]).unwrap_or("????").to_string();
-                    let sub_size = u32::from_le_bytes([data[sub_pos+4], data[sub_pos+5], data[sub_pos+6], data[sub_pos+7]]) as usize;
+                    let sub_id = std::str::from_utf8(&data[sub_pos..sub_pos + 4])
+                        .unwrap_or("????")
+                        .to_string();
+                    let sub_size = u32::from_le_bytes([
+                        data[sub_pos + 4],
+                        data[sub_pos + 5],
+                        data[sub_pos + 6],
+                        data[sub_pos + 7],
+                    ]) as usize;
                     let sub_data_start = sub_pos + 8;
                     let sub_data_end = (sub_data_start + sub_size).min(chunk_data_end);
                     if sub_data_start < sub_data_end {
-                        let value = String::from_utf8_lossy(&data[sub_data_start..sub_data_end]).trim_matches('\0').to_string();
-                        if !value.is_empty() { info_entries.push((sub_id, value)); }
+                        let value = String::from_utf8_lossy(&data[sub_data_start..sub_data_end])
+                            .trim_matches('\0')
+                            .to_string();
+                        if !value.is_empty() {
+                            info_entries.push((sub_id, value));
+                        }
                     }
                     sub_pos = sub_data_start + ((sub_size + 1) & !1);
                 }
@@ -95,12 +117,16 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
         if tool_keys.contains(&key.as_str()) {
             if let Some(tool_name) = known_tools::match_ai_tool(value) {
                 signals.push(
-                    SignalBuilder::new(SignalSource::WavMetadata, Confidence::Medium, "signal_wav_info_tool")
-                        .param("key", key.as_str())
-                        .param("value", value.as_str())
-                        .tool(tool_name)
-                        .detail(key.as_str(), value.as_str())
-                        .build(),
+                    SignalBuilder::new(
+                        SignalSource::WavMetadata,
+                        Confidence::Medium,
+                        "signal_wav_info_tool",
+                    )
+                    .param("key", key.as_str())
+                    .param("value", value.as_str())
+                    .tool(tool_name)
+                    .detail(key.as_str(), value.as_str())
+                    .build(),
                 );
             }
         }
@@ -111,13 +137,17 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
 
     if is_mono && is_tts_rate {
         signals.push(
-            SignalBuilder::new(SignalSource::WavMetadata, Confidence::Low, "signal_wav_tts_heuristic")
-                .param("rate", fmt.sample_rate.to_string())
-                .param("bits", fmt.bits_per_sample.to_string())
-                .detail("channels", fmt.channels.to_string())
-                .detail("sample_rate", format!("{}Hz", fmt.sample_rate))
-                .detail("bits_per_sample", fmt.bits_per_sample.to_string())
-                .build(),
+            SignalBuilder::new(
+                SignalSource::WavMetadata,
+                Confidence::Low,
+                "signal_wav_tts_heuristic",
+            )
+            .param("rate", fmt.sample_rate.to_string())
+            .param("bits", fmt.bits_per_sample.to_string())
+            .detail("channels", fmt.channels.to_string())
+            .detail("sample_rate", format!("{}Hz", fmt.sample_rate))
+            .detail("bits_per_sample", fmt.bits_per_sample.to_string())
+            .build(),
         );
     }
 
@@ -133,12 +163,21 @@ pub fn dump_info(path: &Path) -> Result<Vec<(String, String)>> {
     let mut props = Vec::new();
     props.push(("Sample Rate".to_string(), format!("{}Hz", fmt.sample_rate)));
     props.push(("Channels".to_string(), fmt.channels.to_string()));
-    props.push(("Bits Per Sample".to_string(), fmt.bits_per_sample.to_string()));
+    props.push((
+        "Bits Per Sample".to_string(),
+        fmt.bits_per_sample.to_string(),
+    ));
     for (key, value) in info_entries {
         let label = match key.as_str() {
-            "ISFT" => "Software (ISFT)", "ICMT" => "Comment (ICMT)", "IART" => "Artist (IART)",
-            "IENG" => "Engineer (IENG)", "IPRD" => "Product (IPRD)", "IGNR" => "Genre (IGNR)",
-            "INAM" => "Name (INAM)", "ICRD" => "Date (ICRD)", other => other,
+            "ISFT" => "Software (ISFT)",
+            "ICMT" => "Comment (ICMT)",
+            "IART" => "Artist (IART)",
+            "IENG" => "Engineer (IENG)",
+            "IPRD" => "Product (IPRD)",
+            "IGNR" => "Genre (IGNR)",
+            "INAM" => "Name (INAM)",
+            "ICRD" => "Date (ICRD)",
+            other => other,
         };
         props.push((label.to_string(), value));
     }
@@ -149,7 +188,12 @@ pub fn dump_info(path: &Path) -> Result<Vec<(String, String)>> {
 mod tests {
     use super::*;
 
-    fn make_wav(channels: u16, sample_rate: u32, bits_per_sample: u16, info_chunks: &[(&str, &str)]) -> Vec<u8> {
+    fn make_wav(
+        channels: u16,
+        sample_rate: u32,
+        bits_per_sample: u16,
+        info_chunks: &[(&str, &str)],
+    ) -> Vec<u8> {
         let byte_rate = sample_rate * channels as u32 * bits_per_sample as u32 / 8;
         let block_align = channels * bits_per_sample / 8;
         let data_size = 100u32 * block_align as u32;
@@ -164,11 +208,17 @@ mod tests {
                 info_buf.extend_from_slice(&padded_len.to_le_bytes());
                 info_buf.extend_from_slice(val_bytes);
                 info_buf.push(0);
-                if (val_bytes.len() + 1) % 2 != 0 { info_buf.push(0); }
+                if (val_bytes.len() + 1) % 2 != 0 {
+                    info_buf.push(0);
+                }
             }
         }
         let fmt_size = 16u32;
-        let list_chunk_size = if info_buf.is_empty() { 0 } else { 8 + info_buf.len() as u32 };
+        let list_chunk_size = if info_buf.is_empty() {
+            0
+        } else {
+            8 + info_buf.len() as u32
+        };
         let riff_size = 4 + 8 + fmt_size + 8 + data_size + list_chunk_size;
         buf.extend_from_slice(b"RIFF");
         buf.extend_from_slice(&riff_size.to_le_bytes());
@@ -255,8 +305,14 @@ mod tests {
         let tmp = tempfile::NamedTempFile::new().unwrap();
         fs::write(tmp.path(), &wav).unwrap();
         let props = dump_info(tmp.path()).unwrap();
-        assert!(props.iter().any(|(k, v)| k == "Sample Rate" && v == "24000Hz"));
-        assert!(props.iter().any(|(k, v)| k.contains("ISFT") && v == "MyTool"));
-        assert!(props.iter().any(|(k, v)| k.contains("ICMT") && v == "A comment"));
+        assert!(props
+            .iter()
+            .any(|(k, v)| k == "Sample Rate" && v == "24000Hz"));
+        assert!(props
+            .iter()
+            .any(|(k, v)| k.contains("ISFT") && v == "MyTool"));
+        assert!(props
+            .iter()
+            .any(|(k, v)| k.contains("ICMT") && v == "A comment"));
     }
 }

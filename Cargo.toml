@@ -2,12 +2,15 @@
 name = "aicheck"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.86"
 description = "Detect AI-generated content via provenance signals (C2PA, XMP/IPTC, EXIF)"
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/MatrixA/aicheck"
 homepage = "https://github.com/MatrixA/aicheck"
+documentation = "https://matrixa.github.io/aicheck/"
 keywords = ["ai-detection", "c2pa", "watermark", "metadata", "forensics"]
 categories = ["command-line-utilities", "multimedia"]
+exclude = [".github/", ".context/", "docs/", "tests/fixtures/"]
 
 [lib]
 name = "aicheck"

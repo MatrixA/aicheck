@@ -36,7 +36,8 @@ fn is_supported(path: &Path) -> bool {
     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
         matches!(
             ext.to_lowercase().as_str(),
-            "jpg" | "jpeg"
+            "jpg"
+                | "jpeg"
                 | "png"
                 | "webp"
                 | "avif"
@@ -83,7 +84,10 @@ pub fn discover_files(paths: &[PathBuf], recursive: bool) -> Result<Vec<PathBuf>
         } else {
             eprintln!(
                 "{}",
-                i18n::t("scanner_not_found", &[("path", &path.display().to_string())])
+                i18n::t(
+                    "scanner_not_found",
+                    &[("path", &path.display().to_string())]
+                )
             );
         }
     }

@@ -2,7 +2,7 @@ use anyhow::Result;
 use id3::{Tag, TagLike};
 use std::path::Path;
 
-use super::{Confidence, SignalBuilder, Signal, SignalSource};
+use super::{Confidence, Signal, SignalBuilder, SignalSource};
 use crate::known_tools;
 
 /// Known AI audio platform URL domains.
@@ -24,11 +24,15 @@ fn detect_comments(tag: &Tag) -> Vec<Signal> {
         }
         if let Some(tool_name) = known_tools::match_ai_tool(text) {
             signals.push(
-                SignalBuilder::new(SignalSource::Id3Metadata, Confidence::Medium, "signal_id3_comment")
-                    .param("text", text.as_str())
-                    .tool(tool_name)
-                    .detail("COMM", text.as_str())
-                    .build(),
+                SignalBuilder::new(
+                    SignalSource::Id3Metadata,
+                    Confidence::Medium,
+                    "signal_id3_comment",
+                )
+                .param("text", text.as_str())
+                .tool(tool_name)
+                .detail("COMM", text.as_str())
+                .build(),
             );
         }
     }
@@ -59,11 +63,15 @@ fn check_url(signals: &mut Vec<Signal>, frame_id: &str, url: &str) {
     for &(domain, tool_name) in AI_URL_DOMAINS {
         if lower.contains(domain) {
             signals.push(
-                SignalBuilder::new(SignalSource::Id3Metadata, Confidence::Medium, "signal_id3_url")
-                    .param("url", url)
-                    .tool(tool_name)
-                    .detail(frame_id, url)
-                    .build(),
+                SignalBuilder::new(
+                    SignalSource::Id3Metadata,
+                    Confidence::Medium,
+                    "signal_id3_url",
+                )
+                .param("url", url)
+                .tool(tool_name)
+                .detail(frame_id, url)
+                .build(),
             );
             break;
         }
@@ -77,12 +85,16 @@ fn detect_text_frames(tag: &Tag) -> Vec<Signal> {
         if let Some(text) = tag.get(frame_id).and_then(|f| f.content().text()) {
             if let Some(tool_name) = known_tools::match_ai_tool(text) {
                 signals.push(
-                    SignalBuilder::new(SignalSource::Id3Metadata, Confidence::Medium, "signal_id3_text_frame")
-                        .param("frame", *frame_id)
-                        .param("text", text)
-                        .tool(tool_name)
-                        .detail(*frame_id, text)
-                        .build(),
+                    SignalBuilder::new(
+                        SignalSource::Id3Metadata,
+                        Confidence::Medium,
+                        "signal_id3_text_frame",
+                    )
+                    .param("frame", *frame_id)
+                    .param("text", text)
+                    .tool(tool_name)
+                    .detail(*frame_id, text)
+                    .build(),
                 );
             }
         }
@@ -91,13 +103,17 @@ fn detect_text_frames(tag: &Tag) -> Vec<Signal> {
         let combined = format!("{} {}", txxx.description, txxx.value);
         if let Some(tool_name) = known_tools::match_ai_tool(&combined) {
             signals.push(
-                SignalBuilder::new(SignalSource::Id3Metadata, Confidence::Medium, "signal_id3_txxx")
-                    .param("desc", &txxx.description)
-                    .param("value", &txxx.value)
-                    .tool(tool_name)
-                    .detail("TXXX description", &txxx.description)
-                    .detail("TXXX value", &txxx.value)
-                    .build(),
+                SignalBuilder::new(
+                    SignalSource::Id3Metadata,
+                    Confidence::Medium,
+                    "signal_id3_txxx",
+                )
+                .param("desc", &txxx.description)
+                .param("value", &txxx.value)
+                .tool(tool_name)
+                .detail("TXXX description", &txxx.description)
+                .detail("TXXX value", &txxx.value)
+                .build(),
             );
         }
     }

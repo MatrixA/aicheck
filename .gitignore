@@ -3,3 +3,7 @@
 *.swp
 .idea/
 .vscode/
+.context/
+.env*
+*.pem
+*.key

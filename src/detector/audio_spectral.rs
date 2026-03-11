@@ -4,7 +4,7 @@ use std::fs;
 use std::path::Path;
 
 use super::wav_metadata;
-use super::{Confidence, SignalBuilder, Signal, SignalSource};
+use super::{Confidence, Signal, SignalBuilder, SignalSource};
 
 const FFT_SIZE: usize = 2048;
 const MAX_FRAMES: usize = 64;
@@ -18,7 +18,9 @@ fn decode_pcm_16le(data: &[u8], channels: u16) -> Vec<f64> {
     let mut samples = Vec::with_capacity(num_blocks);
     for i in 0..num_blocks {
         let offset = i * block_align;
-        if offset + 2 > data.len() { break; }
+        if offset + 2 > data.len() {
+            break;
+        }
         let raw = i16::from_le_bytes([data[offset], data[offset + 1]]);
         samples.push(raw as f64 / 32768.0);
     }
@@ -26,7 +28,9 @@ fn decode_pcm_16le(data: &[u8], channels: u16) -> Vec<f64> {
 }
 
 fn compute_avg_spectrum(samples: &[f64], fft_size: usize) -> Vec<f64> {
-    if samples.len() < fft_size { return vec![]; }
+    if samples.len() < fft_size {
+        return vec![];
+    }
     let mut planner = FftPlanner::<f64>::new();
     let fft = planner.plan_fft_forward(fft_size);
     let mid = samples.len() / 2;
@@ -39,55 +43,86 @@ fn compute_avg_spectrum(samples: &[f64], fft_size: usize) -> Vec<f64> {
     let hop = fft_size / 2;
     let mut pos = 0;
     while pos + fft_size <= available.len() && frame_count < MAX_FRAMES {
-        let mut buffer: Vec<Complex<f64>> = available[pos..pos + fft_size].iter().enumerate()
+        let mut buffer: Vec<Complex<f64>> = available[pos..pos + fft_size]
+            .iter()
+            .enumerate()
             .map(|(i, &s)| {
-                let w = 0.5 * (1.0 - (2.0 * std::f64::consts::PI * i as f64 / (fft_size - 1) as f64).cos());
+                let w = 0.5
+                    * (1.0 - (2.0 * std::f64::consts::PI * i as f64 / (fft_size - 1) as f64).cos());
                 Complex::new(s * w, 0.0)
-            }).collect();
+            })
+            .collect();
         fft.process(&mut buffer);
-        for (bin, power) in avg_power.iter_mut().enumerate() { *power += buffer[bin].norm_sqr(); }
+        for (bin, power) in avg_power.iter_mut().enumerate() {
+            *power += buffer[bin].norm_sqr();
+        }
         frame_count += 1;
         pos += hop;
     }
-    if frame_count == 0 { return vec![]; }
-    for power in avg_power.iter_mut() { *power /= frame_count as f64; }
+    if frame_count == 0 {
+        return vec![];
+    }
+    for power in avg_power.iter_mut() {
+        *power /= frame_count as f64;
+    }
     avg_power
 }
 
 fn find_bandwidth_cutoff(spectrum: &[f64], sample_rate: u32) -> Option<(f64, f64)> {
-    if spectrum.is_empty() { return None; }
+    if spectrum.is_empty() {
+        return None;
+    }
     let num_bins = spectrum.len();
     let nyquist = sample_rate as f64 / 2.0;
     let bin_hz = nyquist / num_bins as f64;
     let total_energy: f64 = spectrum.iter().sum();
-    if total_energy == 0.0 { return None; }
+    if total_energy == 0.0 {
+        return None;
+    }
     let mut cumulative = 0.0;
     let mut cutoff_bin = num_bins;
     for (i, &power) in spectrum.iter().enumerate() {
         cumulative += power;
-        if cumulative >= total_energy * 0.99 { cutoff_bin = i + 1; break; }
+        if cumulative >= total_energy * 0.99 {
+            cutoff_bin = i + 1;
+            break;
+        }
     }
     let cutoff_freq = cutoff_bin as f64 * bin_hz;
     let bandwidth_ratio = cutoff_freq / nyquist;
     if bandwidth_ratio < BANDWIDTH_THRESHOLD {
         let below_energy: f64 = spectrum[..cutoff_bin].iter().sum();
         let above_energy: f64 = spectrum[cutoff_bin..].iter().sum();
-        let ratio = if below_energy > 0.0 { above_energy / below_energy } else { 0.0 };
-        if ratio < CUTOFF_ENERGY_RATIO { return Some((cutoff_freq, bandwidth_ratio)); }
+        let ratio = if below_energy > 0.0 {
+            above_energy / below_energy
+        } else {
+            0.0
+        };
+        if ratio < CUTOFF_ENERGY_RATIO {
+            return Some((cutoff_freq, bandwidth_ratio));
+        }
     }
     None
 }
 
 fn spectral_flatness(spectrum: &[f64]) -> f64 {
     let n = spectrum.len() as f64;
-    if n == 0.0 { return 0.0; }
+    if n == 0.0 {
+        return 0.0;
+    }
     let filtered: Vec<f64> = spectrum.iter().copied().filter(|&x| x > 1e-20).collect();
-    if filtered.is_empty() { return 0.0; }
+    if filtered.is_empty() {
+        return 0.0;
+    }
     let n = filtered.len() as f64;
     let log_mean = filtered.iter().map(|x| x.ln()).sum::<f64>() / n;
     let geometric_mean = log_mean.exp();
     let arithmetic_mean = filtered.iter().sum::<f64>() / n;
-    if arithmetic_mean > 0.0 { geometric_mean / arithmetic_mean } else { 0.0 }
+    if arithmetic_mean > 0.0 {
+        geometric_mean / arithmetic_mean
+    } else {
+        0.0
+    }
 }
 
 pub fn detect(path: &Path) -> Result<Vec<Signal>> {
@@ -96,26 +131,38 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
         Some(w) => w,
         None => return Ok(vec![]),
     };
-    if wav.fmt.bits_per_sample != 16 || wav.pcm_start >= wav.pcm_end { return Ok(vec![]); }
+    if wav.fmt.bits_per_sample != 16 || wav.pcm_start >= wav.pcm_end {
+        return Ok(vec![]);
+    }
     let pcm_data = &data[wav.pcm_start..wav.pcm_end];
     let samples = decode_pcm_16le(pcm_data, wav.fmt.channels);
-    if samples.len() < FFT_SIZE { return Ok(vec![]); }
+    if samples.len() < FFT_SIZE {
+        return Ok(vec![]);
+    }
     let spectrum = compute_avg_spectrum(&samples, FFT_SIZE);
-    if spectrum.is_empty() { return Ok(vec![]); }
+    if spectrum.is_empty() {
+        return Ok(vec![]);
+    }
 
     let mut signals = Vec::new();
 
-    if let Some((cutoff_freq, bandwidth_ratio)) = find_bandwidth_cutoff(&spectrum, wav.fmt.sample_rate) {
+    if let Some((cutoff_freq, bandwidth_ratio)) =
+        find_bandwidth_cutoff(&spectrum, wav.fmt.sample_rate)
+    {
         let nyquist = wav.fmt.sample_rate as f64 / 2.0;
         signals.push(
-            SignalBuilder::new(SignalSource::AudioSpectral, Confidence::Low, "signal_audio_cutoff")
-                .param("freq", format!("{:.0}", cutoff_freq))
-                .param("pct", format!("{:.0}", bandwidth_ratio * 100.0))
-                .param("nyquist", format!("{:.0}", nyquist))
-                .detail("cutoff_frequency", format!("{:.0}Hz", cutoff_freq))
-                .detail("nyquist", format!("{:.0}Hz", nyquist))
-                .detail("bandwidth_used", format!("{:.1}%", bandwidth_ratio * 100.0))
-                .build(),
+            SignalBuilder::new(
+                SignalSource::AudioSpectral,
+                Confidence::Low,
+                "signal_audio_cutoff",
+            )
+            .param("freq", format!("{:.0}", cutoff_freq))
+            .param("pct", format!("{:.0}", bandwidth_ratio * 100.0))
+            .param("nyquist", format!("{:.0}", nyquist))
+            .detail("cutoff_frequency", format!("{:.0}Hz", cutoff_freq))
+            .detail("nyquist", format!("{:.0}Hz", nyquist))
+            .detail("bandwidth_used", format!("{:.1}%", bandwidth_ratio * 100.0))
+            .build(),
         );
     }
 
@@ -123,10 +170,14 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     let nyquist = wav.fmt.sample_rate as f64 / 2.0;
     if nyquist <= 12000.0 && wav.fmt.channels == 1 && flatness < 0.05 {
         signals.push(
-            SignalBuilder::new(SignalSource::AudioSpectral, Confidence::Low, "signal_audio_flatness")
-                .param("value", format!("{:.4}", flatness))
-                .detail("spectral_flatness", format!("{:.4}", flatness))
-                .build(),
+            SignalBuilder::new(
+                SignalSource::AudioSpectral,
+                Confidence::Low,
+                "signal_audio_flatness",
+            )
+            .param("value", format!("{:.4}", flatness))
+            .detail("spectral_flatness", format!("{:.4}", flatness))
+            .build(),
         );
     }
 
@@ -177,7 +228,9 @@ mod tests {
     #[test]
     fn test_find_bandwidth_cutoff_half() {
         let mut spectrum = vec![0.0; 1024];
-        for i in 0..300 { spectrum[i] = 1.0; }
+        for i in 0..300 {
+            spectrum[i] = 1.0;
+        }
         let result = find_bandwidth_cutoff(&spectrum, 48000);
         assert!(result.is_some());
         let (freq, ratio) = result.unwrap();
