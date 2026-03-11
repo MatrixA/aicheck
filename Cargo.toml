@@ -9,6 +9,10 @@ homepage = "https://github.com/MatrixA/aicheck"
 keywords = ["ai-detection", "c2pa", "watermark", "metadata", "forensics"]
 categories = ["command-line-utilities", "multimedia"]
 
+[lib]
+name = "aicheck"
+path = "src/lib.rs"
+
 [[bin]]
 name = "aic"
 path = "src/main.rs"

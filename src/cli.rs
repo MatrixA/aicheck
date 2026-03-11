@@ -69,11 +69,11 @@ pub enum ConfidenceFilter {
 }
 
 impl ConfidenceFilter {
-    pub fn to_confidence(&self) -> crate::detector::Confidence {
+    pub fn to_confidence(&self) -> aicheck::detector::Confidence {
         match self {
-            ConfidenceFilter::Low => crate::detector::Confidence::Low,
-            ConfidenceFilter::Medium => crate::detector::Confidence::Medium,
-            ConfidenceFilter::High => crate::detector::Confidence::High,
+            ConfidenceFilter::Low => aicheck::detector::Confidence::Low,
+            ConfidenceFilter::Medium => aicheck::detector::Confidence::Medium,
+            ConfidenceFilter::High => aicheck::detector::Confidence::High,
         }
     }
 }

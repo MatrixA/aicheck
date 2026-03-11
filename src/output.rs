@@ -1,8 +1,8 @@
 use colored::Colorize;
 use serde::Serialize;
 
-use crate::detector::{Confidence, FileReport};
-use crate::i18n;
+use aicheck::detector::{Confidence, FileReport};
+use aicheck::i18n;
 
 #[derive(Serialize)]
 struct JsonOutput<'a> {
@@ -135,7 +135,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
     let c2pa_signals: Vec<_> = report
         .signals
         .iter()
-        .filter(|s| matches!(s.source, crate::detector::SignalSource::C2pa))
+        .filter(|s| matches!(s.source, aicheck::detector::SignalSource::C2pa))
         .collect();
     if !c2pa_signals.is_empty() {
         println!("{}", i18n::t("info_c2pa_header", &[]).cyan().bold());
@@ -197,7 +197,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
     let wm_signals: Vec<_> = report
         .signals
         .iter()
-        .filter(|s| matches!(s.source, crate::detector::SignalSource::Watermark))
+        .filter(|s| matches!(s.source, aicheck::detector::SignalSource::Watermark))
         .collect();
     if !wm_signals.is_empty() {
         println!("{}", i18n::t("info_watermark_header", &[]).cyan().bold());

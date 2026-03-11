@@ -1,16 +1,12 @@
 mod cli;
-mod detector;
-mod i18n;
-mod known_tools;
 mod output;
-mod scanner;
 
 use clap::Parser;
 use cli::{Cli, Command};
 use colored::control::set_override;
 use std::process::ExitCode;
 
-rust_i18n::i18n!("locales", fallback = "en");
+use aicheck::{detector, i18n, scanner};
 
 fn main() -> ExitCode {
     let args = Cli::parse();
