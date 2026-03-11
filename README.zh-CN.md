@@ -8,7 +8,7 @@
 
 AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需要 API key，不需要联网，不需要配置。
 
-**6 种检测方法** · **39 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
+**10 种检测方法** · **51 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
 
 ---
 
@@ -40,39 +40,47 @@ real_photo.jpg
 ## 工作原理
 
 ```
-                       你的文件
-                          |
-          +-------+-------+-------+-------+
-          |       |       |       |       |
-          v       v       v       v       v
-      [ C2PA ] [XMP/IPTC] [EXIF] [PNG]  [MP4]
-       HIGH    MEDIUM     LOW    LOW    MEDIUM
-          |       |       |       |       |
-          +---+---+---+---+---+---+---+---+
-              |                       |
-              v                       v
-      检测到元数据信号?          没有信号?
-              |                       |
-              v                       v
-          [ 判定 ]            [ 隐形水印检测 ]
-                              DWT-DCT 分析
-                              置信度: LOW
-                                    |
-                                    v
-                                [ 判定 ]
+                              你的文件
+                                 |
+     +------+------+------+------+------+------+------+
+     |      |      |      |      |      |      |      |
+     v      v      v      v      v      v      v      v
+  [C2PA] [XMP]  [EXIF] [PNG]  [MP4]  [ID3]  [WAV]  [文件名]
+  HIGH  MEDIUM  LOW    LOW   MEDIUM MEDIUM MEDIUM   LOW
+     |      |      |      |      |      |      |      |
+     +--+---+--+---+--+---+--+---+--+---+--+---+--+---+
+        |                                          |
+        v                                          v
+  检测到元数据信号?                          没有信号?
+        |                                          |
+        v                                          v
+   [ 判定 ]                    [ 隐形水印 / 音频频谱分析 ]
+                                DWT-DCT 或 FFT 分析
+                                置信度: LOW
+                                       |
+                                       v
+                                  [ 判定 ]
 ```
 
 ### 检测方法
 
-**C2PA 清单（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这就是元数据能提供的最权威证据。读取 `digitalSourceType` 和 `claim_generator` 字段。支持图片和视频。
+**C2PA 清单（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这就是元数据能提供的最权威证据。读取 `digitalSourceType` 和 `claim_generator` 字段。支持图片、视频和音频（如 ElevenLabs）。
 
 **XMP/IPTC 元数据（MEDIUM 置信度）**— 标准照片元数据：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`。可靠但没有签名——可以伪造或删除。
 
 **MP4 容器元数据（MEDIUM 置信度）**— 解析 iTunes 风格原子（`©too`、`©swr`）、AIGC 标签（中国标准，含 JSON `ProduceID`）和 H.264 SEI 水印标记（如 Kling）。能捕获嵌入视频容器中的 AI 信号。
 
+**ID3 音频元数据（MEDIUM 置信度）**— 读取 MP3 文件的 ID3v2 标签：注释帧（COMM）、URL 帧（WOAS/WOAF/WXXX）和文本帧（TENC/TPUB/TXXX）。可检测 Suno 等 AI 音频平台（通过嵌入的 URL 和「made with suno」注释）。
+
+**WAV 容器元数据（MEDIUM/LOW 置信度）**— 解析 RIFF LIST/INFO 块（ISFT、ICMT、IART）中的 AI 工具引用。同时标记 TTS 典型音频特征：单声道 + 非标准采样率（16kHz、22050Hz、24000Hz）。
+
 **EXIF 启发式（LOW 置信度）**— 如果 `Software` 标签匹配已知 AI 工具，且缺少典型的相机字段（Make、Model、GPS、焦距），那大概率是 AI 生成的。也能检测哈希式的 Artist 标签。
 
 **PNG 文本块（LOW 置信度）**— 扫描 `tEXt` 和 `iTXt` 块中 Software、Comment、Description、Source、Author、parameters、prompt 等关键字里的 AI 工具引用。
+
+**文件名模式（LOW 置信度）**— 将文件名与已知 AI 工具的命名规则匹配（如 ElevenLabs 的时间戳格式 `ElevenLabs_YYYY-MM-DDTHH_MM_SS_*`、Suno/SoundRaw 前缀、文件名中的 Midjourney/DALL-E）。
+
+**音频频谱分析（LOW 置信度）**— 基于 FFT 的 WAV 音频分析：检测硬频率截断（能量集中在奈奎斯特频率以下）和异常的频谱平坦度，这些是 TTS/AI 合成的典型特征。作为后备方案自动运行，或通过 `--deep` 强制启用。
 
 **隐形水印（LOW 置信度）**— 像素级 DWT-DCT 分析，检测通道噪声不对称性、跨通道比特一致性和小波能量模式。当未检测到元数据信号时自动运行，也可通过 `--deep` 强制启用。
 
@@ -86,6 +94,7 @@ real_photo.jpg
 |------|------|
 | 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
 | 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu |
+| 音频/音乐生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
 | 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
 | 平台 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 界面工具 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
@@ -119,7 +128,7 @@ aic check photo.jpg --deep                # 强制启用像素级水印分析
 
 ### `aic info <FILE>`
 
-输出所有溯源元数据（C2PA 清单、XMP 属性、EXIF 字段、MP4 原子、水印分析）。
+输出所有溯源元数据（C2PA 清单、XMP 属性、EXIF 字段、MP4 原子、ID3 标签、WAV 元数据、水印分析）。
 
 ```bash
 aic info photo.jpg
@@ -131,7 +140,7 @@ aic info photo.jpg
 |------|------|
 | `--json` | 以 JSON 格式输出 |
 | `-q, --quiet` | 不输出内容，仅设置退出码 |
-| `--deep` | 强制对所有文件进行隐形水印分析 |
+| `--deep` | 强制对所有文件进行隐形水印和音频频谱分析 |
 | `--no-color` | 禁用彩色输出 |
 
 ### 退出码

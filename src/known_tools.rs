@@ -48,6 +48,17 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
     "chatgpt",
     "seedream",
     "recraft",
+    "elevenlabs",
+    "eleven labs",
+    "suno",
+    "udio.com",
+    "soundraw",
+    "aiva",
+    "boomy",
+    "mubert",
+    "loudly.com",
+    "beatoven",
+    "soundful",
 ];
 
 /// Check if a string contains any known AI tool pattern (case-insensitive).

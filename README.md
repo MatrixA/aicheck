@@ -8,7 +8,7 @@
 
 AICheck answers these questions by analyzing file metadata and invisible watermarks. No API keys, no network, no setup.
 
-**6 detection methods** · **39 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
+**10 detection methods** · **51 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
 
 ---
 
@@ -40,39 +40,47 @@ real_photo.jpg
 ## How It Works
 
 ```
-                       your file
-                          |
-          +-------+-------+-------+-------+
-          |       |       |       |       |
-          v       v       v       v       v
-      [ C2PA ] [XMP/IPTC] [EXIF] [PNG]  [MP4]
-       HIGH    MEDIUM     LOW    LOW    MEDIUM
-          |       |       |       |       |
-          +---+---+---+---+---+---+---+---+
-              |                       |
-              v                       v
-    metadata signals found?     no signals?
-              |                       |
-              v                       v
-         [ Verdict ]        [ Invisible Watermark ]
-                              DWT-DCT analysis
+                              your file
+                                 |
+     +------+------+------+------+------+------+------+
+     |      |      |      |      |      |      |      |
+     v      v      v      v      v      v      v      v
+  [C2PA] [XMP]  [EXIF] [PNG]  [MP4]  [ID3]  [WAV]  [FILE]
+  HIGH  MEDIUM  LOW    LOW   MEDIUM MEDIUM MEDIUM   LOW
+     |      |      |      |      |      |      |      |
+     +--+---+--+---+--+---+--+---+--+---+--+---+--+---+
+        |                                          |
+        v                                          v
+  metadata signals found?                    no signals?
+        |                                          |
+        v                                          v
+   [ Verdict ]              [ Invisible Watermark / Audio Spectral ]
+                              DWT-DCT or FFT analysis
                               confidence: LOW
-                                    |
-                                    v
-                               [ Verdict ]
+                                       |
+                                       v
+                                  [ Verdict ]
 ```
 
 ### Detection Methods
 
-**C2PA Manifests (HIGH confidence)** — Cryptographically signed provenance. If a C2PA manifest says "made by DALL-E," that's the most authoritative signal metadata can provide. Reads `digitalSourceType` and `claim_generator`. Works on both images and videos.
+**C2PA Manifests (HIGH confidence)** — Cryptographically signed provenance. If a C2PA manifest says "made by DALL-E," that's the most authoritative signal metadata can provide. Reads `digitalSourceType` and `claim_generator`. Works on images, videos, and audio (e.g. ElevenLabs).
 
 **XMP/IPTC Metadata (MEDIUM confidence)** — Standard photo metadata: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Reliable but unsigned — can be faked or stripped.
 
 **MP4 Container Metadata (MEDIUM confidence)** — Parses iTunes-style atoms (`©too`, `©swr`), AIGC labels (China standard with JSON `ProduceID`), and H.264 SEI watermark markers (e.g. Kling). Catches AI signals baked into video containers that other methods miss.
 
+**ID3 Audio Metadata (MEDIUM confidence)** — Reads ID3v2 tags from MP3 files: comment frames (COMM), URL frames (WOAS/WOAF/WXXX), and text frames (TENC/TPUB/TXXX). Detects AI audio platforms like Suno (via embedded URLs and "made with suno" comments).
+
+**WAV Container Metadata (MEDIUM/LOW confidence)** — Parses RIFF LIST/INFO chunks (ISFT, ICMT, IART) for AI tool references. Also flags TTS-typical audio characteristics: mono channel + non-standard sample rates (16kHz, 22050Hz, 24000Hz).
+
 **EXIF Heuristics (LOW confidence)** — If the `Software` tag matches a known AI tool AND typical camera fields (Make, Model, GPS, focal length) are absent, it's likely AI-generated. Also detects hash-like Artist tags.
 
 **PNG Text Chunks (LOW confidence)** — Scans `tEXt` and `iTXt` chunks for AI tool references in Software, Comment, Description, Source, Author, parameters, and prompt keywords.
+
+**Filename Patterns (LOW confidence)** — Matches filenames against known AI tool naming conventions (e.g. ElevenLabs timestamp format `ElevenLabs_YYYY-MM-DDTHH_MM_SS_*`, Suno/SoundRaw prefixes, Midjourney/DALL-E in filenames).
+
+**Audio Spectral Analysis (LOW confidence)** — FFT-based analysis of WAV audio: detects hard frequency cutoffs (energy concentrated below Nyquist) and abnormal spectral flatness typical of TTS/AI synthesis. Runs as a fallback or with `--deep`.
 
 **Invisible Watermarks (LOW confidence)** — Pixel-level DWT-DCT analysis that detects channel noise asymmetry, cross-channel bit agreement, and wavelet energy patterns. Runs automatically as a fallback when no metadata signals are found, or on demand with `--deep`.
 
@@ -86,6 +94,7 @@ real_photo.jpg
 |----------|-------|
 | Image generation | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
 | Video generation | Sora, Google Veo, Runway, Pika, Kling, Vidu |
+| Audio/Music generation | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
 | Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
 | Platforms | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Interfaces | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
@@ -119,7 +128,7 @@ aic check photo.jpg --deep                # force pixel-level watermark analysis
 
 ### `aic info <FILE>`
 
-Dump all provenance metadata (C2PA manifests, XMP properties, EXIF fields, MP4 atoms, watermark analysis).
+Dump all provenance metadata (C2PA manifests, XMP properties, EXIF fields, MP4 atoms, ID3 tags, WAV metadata, watermark analysis).
 
 ```bash
 aic info photo.jpg
@@ -131,7 +140,7 @@ aic info photo.jpg
 |------|--------|
 | `--json` | Output as JSON |
 | `-q, --quiet` | Suppress output, set exit code only |
-| `--deep` | Force invisible watermark analysis on all files |
+| `--deep` | Force invisible watermark and audio spectral analysis on all files |
 | `--no-color` | Disable colored output |
 
 ### Exit Codes
