@@ -2,6 +2,8 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
+use crate::i18n;
+
 /// Supported MIME types for analysis.
 const SUPPORTED_TYPES: &[&str] = &[
     "image/jpeg",
@@ -79,7 +81,10 @@ pub fn discover_files(paths: &[PathBuf], recursive: bool) -> Result<Vec<PathBuf>
                 }
             }
         } else {
-            eprintln!("Warning: {} not found, skipping", path.display());
+            eprintln!(
+                "{}",
+                i18n::t("scanner_not_found", &[("path", &path.display().to_string())])
+            );
         }
     }
 

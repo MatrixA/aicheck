@@ -22,6 +22,10 @@ pub struct Cli {
     /// Disable colored output
     #[arg(long, global = true)]
     pub no_color: bool,
+
+    /// Override display language (e.g., en, zh-CN, de, ja, ko, hi, es)
+    #[arg(long, global = true)]
+    pub lang: Option<String>,
 }
 
 #[derive(Subcommand)]

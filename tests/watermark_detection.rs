@@ -4,7 +4,7 @@ use predicates::prelude::*;
 #[test]
 fn watermarked_dwtdct_detected_with_deep() {
     cargo_bin_cmd!("aic")
-        .args(["check", "--deep", "tests/fixtures/watermarked_dwtdct.png"])
+        .args(["--lang", "en", "check", "--deep", "tests/fixtures/watermarked_dwtdct.png"])
         .assert()
         .success() // exit 0 = AI detected
         .stdout(predicate::str::contains("WATERMARK"))
@@ -23,7 +23,7 @@ fn watermarked_dwtdctsvd_detected_with_deep() {
 #[test]
 fn clean_image_not_detected_with_deep() {
     cargo_bin_cmd!("aic")
-        .args(["check", "--deep", "tests/fixtures/clean_synthetic.png"])
+        .args(["--lang", "en", "check", "--deep", "tests/fixtures/clean_synthetic.png"])
         .assert()
         .code(1) // exit 1 = no AI detected
         .stdout(predicate::str::contains("No AI-generation signals detected"));
@@ -68,7 +68,7 @@ fn watermarked_json_output() {
 #[test]
 fn watermark_info_command() {
     cargo_bin_cmd!("aic")
-        .args(["info", "tests/fixtures/watermarked_dwtdct.png"])
+        .args(["--lang", "en", "info", "tests/fixtures/watermarked_dwtdct.png"])
         .assert()
         .success()
         .stdout(predicate::str::contains("Watermark Analysis"));

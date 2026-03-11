@@ -3,7 +3,7 @@ use c2pa::assertions::{Actions, DigitalSourceType};
 use c2pa::Reader;
 use std::path::Path;
 
-use super::{Confidence, Signal, SignalSource};
+use super::{Confidence, SignalBuilder, Signal, SignalSource};
 use crate::known_tools;
 
 /// AI-related digital source types that indicate AI generation.
@@ -46,9 +46,6 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
 
     let mut signals = Vec::new();
 
-    // Check all manifests — active manifest may not contain the AI generation action
-    // (e.g., GPT images have a parent manifest with c2pa.created + digitalSourceType
-    // and a child manifest with c2pa.opened)
     for manifest in reader.manifests().values() {
         check_manifest(manifest, &mut signals);
     }
@@ -61,13 +58,13 @@ fn check_manifest(manifest: &c2pa::Manifest, signals: &mut Vec<Signal>) {
     // Check claim_generator for known AI tools
     if let Some(cg) = manifest.claim_generator() {
         if let Some(tool_name) = known_tools::match_ai_tool(cg) {
-            signals.push(Signal {
-                source: SignalSource::C2pa,
-                confidence: Confidence::High,
-                description: format!("claim_generator matches AI tool: {}", cg),
-                tool: Some(tool_name.to_string()),
-                details: vec![("claim_generator".into(), cg.to_string())],
-            });
+            signals.push(
+                SignalBuilder::new(SignalSource::C2pa, Confidence::High, "signal_c2pa_claim_generator")
+                    .param("value", cg)
+                    .tool(tool_name)
+                    .detail("claim_generator", cg)
+                    .build(),
+            );
         }
     }
 
@@ -76,22 +73,19 @@ fn check_manifest(manifest: &c2pa::Manifest, signals: &mut Vec<Signal>) {
         for info in info_list {
             let info_json = serde_json::to_string(info).unwrap_or_default();
             if let Some(tool_name) = known_tools::match_ai_tool(&info_json) {
-                signals.push(Signal {
-                    source: SignalSource::C2pa,
-                    confidence: Confidence::High,
-                    description: "claim_generator_info references AI tool".to_string(),
-                    tool: Some(tool_name.to_string()),
-                    details: vec![("claim_generator_info".into(), info_json)],
-                });
+                signals.push(
+                    SignalBuilder::new(SignalSource::C2pa, Confidence::High, "signal_c2pa_claim_generator_info")
+                        .tool(tool_name)
+                        .detail("claim_generator_info", &info_json)
+                        .build(),
+                );
             }
         }
     }
 
     // Check actions assertions for digitalSourceType
-    // Use the actual assertion labels present in the manifest to avoid duplicates
     let mut checked_labels = Vec::new();
     for label in &[Actions::LABEL, "c2pa.actions.v2"] {
-        // Skip if we already found signals from this assertion (v1/v2 can overlap)
         if checked_labels.iter().any(|l: &&str| l == label) {
             continue;
         }
@@ -109,20 +103,19 @@ fn check_manifest(manifest: &c2pa::Manifest, signals: &mut Vec<Signal>) {
                             details.push(("softwareAgent".into(), sw_str));
                         }
 
-                        signals.push(Signal {
-                            source: SignalSource::C2pa,
-                            confidence,
-                            description: format!("digitalSourceType = {}", desc),
-                            tool: action.software_agent().and_then(|sw| {
-                                let sw_str = serde_json::to_string(sw).unwrap_or_default();
-                                known_tools::match_ai_tool(&sw_str).map(|s| s.to_string())
-                            }),
-                            details,
-                        });
+                        signals.push(
+                            SignalBuilder::new(SignalSource::C2pa, confidence, "signal_c2pa_digital_source_type")
+                                .param("value", desc)
+                                .tool_opt(action.software_agent().and_then(|sw| {
+                                    let sw_str = serde_json::to_string(sw).unwrap_or_default();
+                                    known_tools::match_ai_tool(&sw_str).map(|s| s.to_string())
+                                }))
+                                .details(details)
+                                .build(),
+                        );
                     }
                 }
             }
-            // If we found actions with v1 label, skip v2 (they return same data)
             break;
         }
     }

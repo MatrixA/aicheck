@@ -2,6 +2,7 @@ use colored::Colorize;
 use serde::Serialize;
 
 use crate::detector::{Confidence, FileReport};
+use crate::i18n;
 
 #[derive(Serialize)]
 struct JsonOutput<'a> {
@@ -50,12 +51,12 @@ pub fn print_human(reports: &[FileReport]) {
         }
 
         if report.signals.is_empty() {
-            println!("  {}", "No AI-generation signals detected.".dimmed());
+            println!("  {}", i18n::t("output_no_signals", &[]).dimmed());
             continue;
         }
 
         for signal in &report.signals {
-            let conf_str = format!("{:<6}", signal.confidence.to_string());
+            let conf_str = format!("{:<6}", signal.confidence.localized());
             let colored_conf = match signal.confidence {
                 Confidence::High => conf_str.red().bold(),
                 Confidence::Medium => conf_str.yellow().bold(),
@@ -63,7 +64,8 @@ pub fn print_human(reports: &[FileReport]) {
                 Confidence::None => conf_str.dimmed(),
             };
             let source = format!("{}", signal.source);
-            print!("  {} {}: {}", colored_conf, source.dimmed(), signal.description);
+            let desc = signal.localized_description();
+            print!("  {} {}: {}", colored_conf, source.dimmed(), desc);
             if let Some(tool) = &signal.tool {
                 print!(" [{}]", tool.green());
             }
@@ -73,10 +75,10 @@ pub fn print_human(reports: &[FileReport]) {
         // Verdict
         let verdict = if report.ai_generated {
             let label = match report.overall_confidence {
-                Confidence::High => "AI-generated".red().bold(),
-                Confidence::Medium => "Likely AI-generated".yellow().bold(),
-                Confidence::Low => "Possibly AI-generated".blue(),
-                Confidence::None => "Unknown".dimmed(),
+                Confidence::High => i18n::t("verdict_ai_generated", &[]).red().bold(),
+                Confidence::Medium => i18n::t("verdict_likely_ai", &[]).yellow().bold(),
+                Confidence::Low => i18n::t("verdict_possibly_ai", &[]).blue(),
+                Confidence::None => i18n::t("verdict_unknown", &[]).dimmed(),
             };
             format!(
                 "  Verdict: {} (confidence: {})",
@@ -84,7 +86,7 @@ pub fn print_human(reports: &[FileReport]) {
                 report.overall_confidence
             )
         } else {
-            format!("  Verdict: {}", "Not detected as AI-generated".green())
+            format!("  Verdict: {}", i18n::t("verdict_not_detected", &[]).green())
         };
         println!("{}", verdict);
     }
@@ -95,9 +97,15 @@ pub fn print_human(reports: &[FileReport]) {
         println!();
         println!(
             "{}",
-            format!(
-                "Results: {}/{} files with AI signals ({} HIGH, {} MEDIUM, {} LOW)",
-                summary.ai_detected, summary.total, summary.high, summary.medium, summary.low
+            i18n::t(
+                "output_summary",
+                &[
+                    ("detected", &summary.ai_detected.to_string()),
+                    ("total", &summary.total.to_string()),
+                    ("high", &summary.high.to_string()),
+                    ("medium", &summary.medium.to_string()),
+                    ("low", &summary.low.to_string()),
+                ],
             )
             .bold()
         );
@@ -111,7 +119,7 @@ pub fn print_json(reports: &[FileReport]) {
     };
     match serde_json::to_string_pretty(&output) {
         Ok(json) => println!("{}", json),
-        Err(e) => eprintln!("Error: failed to serialize JSON: {}", e),
+        Err(e) => eprintln!("{}", i18n::t("error_json_serialize", &[("err", &e.to_string())])),
     }
 }
 
@@ -119,7 +127,7 @@ pub fn print_json(reports: &[FileReport]) {
 pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fields: &[(String, String)], mp4_meta: &[(String, String)], id3_tags: &[(String, String)], wav_meta: &[(String, String)]) {
     println!("{}", report.path.display().to_string().bold());
     if let Some(mime) = &report.mime_type {
-        println!("  Type: {}", mime);
+        println!("  {}", i18n::t("output_type_label", &[("mime", mime.as_str())]));
     }
     println!();
 
@@ -130,9 +138,9 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
         .filter(|s| matches!(s.source, crate::detector::SignalSource::C2pa))
         .collect();
     if !c2pa_signals.is_empty() {
-        println!("{}", "=== C2PA Manifest ===".cyan().bold());
+        println!("{}", i18n::t("info_c2pa_header", &[]).cyan().bold());
         for signal in &c2pa_signals {
-            println!("  {}", signal.description);
+            println!("  {}", signal.localized_description());
             for (key, val) in &signal.details {
                 println!("    {}: {}", key.dimmed(), val);
             }
@@ -142,7 +150,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
 
     // XMP section
     if !xmp_props.is_empty() {
-        println!("{}", "=== XMP Metadata ===".cyan().bold());
+        println!("{}", i18n::t("info_xmp_header", &[]).cyan().bold());
         for (key, val) in xmp_props {
             println!("  {}: {}", key, val);
         }
@@ -151,7 +159,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
 
     // EXIF section
     if !exif_fields.is_empty() {
-        println!("{}", "=== EXIF Data ===".cyan().bold());
+        println!("{}", i18n::t("info_exif_header", &[]).cyan().bold());
         for (key, val) in exif_fields {
             println!("  {}: {}", key, val);
         }
@@ -160,7 +168,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
 
     // MP4 Metadata section
     if !mp4_meta.is_empty() {
-        println!("{}", "=== MP4 Metadata ===".cyan().bold());
+        println!("{}", i18n::t("info_mp4_header", &[]).cyan().bold());
         for (key, val) in mp4_meta {
             println!("  {}: {}", key, val);
         }
@@ -169,7 +177,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
 
     // ID3 Tags section
     if !id3_tags.is_empty() {
-        println!("{}", "=== ID3 Tags ===".cyan().bold());
+        println!("{}", i18n::t("info_id3_header", &[]).cyan().bold());
         for (key, val) in id3_tags {
             println!("  {}: {}", key, val);
         }
@@ -178,7 +186,7 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
 
     // WAV Metadata section
     if !wav_meta.is_empty() {
-        println!("{}", "=== WAV Metadata ===".cyan().bold());
+        println!("{}", i18n::t("info_wav_header", &[]).cyan().bold());
         for (key, val) in wav_meta {
             println!("  {}: {}", key, val);
         }
@@ -192,9 +200,9 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
         .filter(|s| matches!(s.source, crate::detector::SignalSource::Watermark))
         .collect();
     if !wm_signals.is_empty() {
-        println!("{}", "=== Watermark Analysis ===".cyan().bold());
+        println!("{}", i18n::t("info_watermark_header", &[]).cyan().bold());
         for signal in &wm_signals {
-            println!("  {}", signal.description);
+            println!("  {}", signal.localized_description());
             for (key, val) in &signal.details {
                 println!("    {}: {}", key.dimmed(), val);
             }
@@ -203,6 +211,6 @@ pub fn print_info(report: &FileReport, xmp_props: &[(String, String)], exif_fiel
     }
 
     if c2pa_signals.is_empty() && xmp_props.is_empty() && exif_fields.is_empty() && mp4_meta.is_empty() && id3_tags.is_empty() && wav_meta.is_empty() && wm_signals.is_empty() {
-        println!("{}", "No provenance metadata found.".dimmed());
+        println!("{}", i18n::t("info_no_metadata", &[]).dimmed());
     }
 }
