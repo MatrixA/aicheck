@@ -63,7 +63,7 @@ fn check_text_chunk(keyword: &str, value: &str, signals: &mut Vec<Signal>) {
             SignalBuilder::new(SignalSource::PngText, Confidence::Low, "signal_png_text_chunk")
                 .param("keyword", keyword)
                 .tool(tool_name)
-                .detail(keyword, &truncate(value, 200))
+                .detail(keyword, truncate(value, 200))
                 .build(),
         );
     }

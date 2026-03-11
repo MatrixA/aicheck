@@ -54,7 +54,7 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
             if let Some(tool_name) = known_tools::match_ai_tool(&val) {
                 signals.push(
                     SignalBuilder::new(SignalSource::Exif, Confidence::Low, "signal_exif_tag_value")
-                        .param("tag", &tag.to_string())
+                        .param("tag", tag.to_string())
                         .param("value", &val)
                         .tool(tool_name)
                         .detail(tag.to_string(), &val)
@@ -72,7 +72,7 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
             if let Some(tool_name) = known_tools::match_ai_tool(&val) {
                 signals.push(
                     SignalBuilder::new(SignalSource::Exif, Confidence::Low, "signal_exif_tag_references_ai")
-                        .param("tag", &tag.to_string())
+                        .param("tag", tag.to_string())
                         .tool(tool_name)
                         .detail(tag.to_string(), &val)
                         .build(),

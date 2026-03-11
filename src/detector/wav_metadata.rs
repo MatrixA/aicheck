@@ -112,11 +112,11 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     if is_mono && is_tts_rate {
         signals.push(
             SignalBuilder::new(SignalSource::WavMetadata, Confidence::Low, "signal_wav_tts_heuristic")
-                .param("rate", &fmt.sample_rate.to_string())
-                .param("bits", &fmt.bits_per_sample.to_string())
-                .detail("channels", &fmt.channels.to_string())
-                .detail("sample_rate", &format!("{}Hz", fmt.sample_rate))
-                .detail("bits_per_sample", &fmt.bits_per_sample.to_string())
+                .param("rate", fmt.sample_rate.to_string())
+                .param("bits", fmt.bits_per_sample.to_string())
+                .detail("channels", fmt.channels.to_string())
+                .detail("sample_rate", format!("{}Hz", fmt.sample_rate))
+                .detail("bits_per_sample", fmt.bits_per_sample.to_string())
                 .build(),
         );
     }

@@ -1,7 +1,7 @@
-/// Internationalization helpers.
-///
-/// Provides locale detection, initialization, and message rendering with
-/// named parameter substitution.
+//! Internationalization helpers.
+//!
+//! Provides locale detection, initialization, and message rendering with
+//! named parameter substitution.
 
 /// Supported locale codes.
 const SUPPORTED_LOCALES: &[&str] = &["en", "zh-CN", "de", "ja", "ko", "hi", "es"];

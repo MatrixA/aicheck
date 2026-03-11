@@ -109,12 +109,12 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
         let nyquist = wav.fmt.sample_rate as f64 / 2.0;
         signals.push(
             SignalBuilder::new(SignalSource::AudioSpectral, Confidence::Low, "signal_audio_cutoff")
-                .param("freq", &format!("{:.0}", cutoff_freq))
-                .param("pct", &format!("{:.0}", bandwidth_ratio * 100.0))
-                .param("nyquist", &format!("{:.0}", nyquist))
-                .detail("cutoff_frequency", &format!("{:.0}Hz", cutoff_freq))
-                .detail("nyquist", &format!("{:.0}Hz", nyquist))
-                .detail("bandwidth_used", &format!("{:.1}%", bandwidth_ratio * 100.0))
+                .param("freq", format!("{:.0}", cutoff_freq))
+                .param("pct", format!("{:.0}", bandwidth_ratio * 100.0))
+                .param("nyquist", format!("{:.0}", nyquist))
+                .detail("cutoff_frequency", format!("{:.0}Hz", cutoff_freq))
+                .detail("nyquist", format!("{:.0}Hz", nyquist))
+                .detail("bandwidth_used", format!("{:.1}%", bandwidth_ratio * 100.0))
                 .build(),
         );
     }
@@ -124,8 +124,8 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     if nyquist <= 12000.0 && wav.fmt.channels == 1 && flatness < 0.05 {
         signals.push(
             SignalBuilder::new(SignalSource::AudioSpectral, Confidence::Low, "signal_audio_flatness")
-                .param("value", &format!("{:.4}", flatness))
-                .detail("spectral_flatness", &format!("{:.4}", flatness))
+                .param("value", format!("{:.4}", flatness))
+                .detail("spectral_flatness", format!("{:.4}", flatness))
                 .build(),
         );
     }
