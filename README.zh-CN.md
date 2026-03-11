@@ -1,8 +1,19 @@
-> [English](README.md) | **简体中文**
+> [English](README.md) | **简体中文** | [Deutsch](README.de.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [हिन्दी](README.hi.md) | [Español](README.es.md)
+
+<div align="center">
 
 # AICheck
 
-*那张疯传的图片——是AI还是真的？*
+**检测 AI 生成的内容。离线运行。无需 API key。无需配置。**
+
+[![CI](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml/badge.svg)](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/aicheck)](https://crates.io/crates/aicheck)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.86%2B-orange.svg)](https://www.rust-lang.org/)
+
+</div>
+
+*那张疯传的图片——是 AI 还是真的？*
 *这个视频是用哪个模型生成的？*
 *这张照片的元数据可信吗？*
 
@@ -12,13 +23,13 @@ AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需
 
 ---
 
-## 快速开始
+## ⚡ 快速开始
 
 ```bash
-cargo install --path .
+cargo install aicheck
 ```
 
-> 需要 Rust 1.86+
+> 需要 Rust 1.86+。从源码构建：`cargo install --path .`
 
 ```bash
 aic check photo.jpg
@@ -37,7 +48,7 @@ real_photo.jpg
 
 ---
 
-## 工作原理
+## 🔍 工作原理
 
 ```
                               你的文件
@@ -86,7 +97,7 @@ real_photo.jpg
 
 ---
 
-## 识别能力
+## 🎯 识别能力
 
 ### AI 工具
 
@@ -111,7 +122,7 @@ real_photo.jpg
 
 ---
 
-## 命令
+## 💻 命令
 
 ### `aic check [PATHS]`
 
@@ -153,7 +164,7 @@ aic info photo.jpg
 
 ---
 
-## 做不到的事
+## ⚠️ 局限性
 
 - **元数据被删了就没辙。** 如果有人把元数据剥掉了，那就没有可检测的内容。社交平台上传时会自动做这件事——请分析原始文件。
 - **大多数 AI 图片没有水印。** 仅约 19% 的 AI 图片携带可检测的来源标记（2025 年数据）。
@@ -162,6 +173,6 @@ aic info photo.jpg
 
 ---
 
-## 许可证
+## 📄 许可证
 
-MIT
+[AGPL-3.0](LICENSE)
