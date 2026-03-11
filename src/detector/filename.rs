@@ -1,10 +1,9 @@
 use anyhow::Result;
 use std::path::Path;
 
-use super::{Confidence, Signal, SignalSource};
+use super::{Confidence, SignalBuilder, Signal, SignalSource};
 
 /// Known filename patterns from AI audio/media generation tools.
-/// Format: (pattern prefix or substring, tool name, is_regex)
 const FILENAME_PATTERNS: &[(&str, &str)] = &[
     ("elevenlabs_", "elevenlabs"),
     ("suno_", "suno"),
@@ -13,7 +12,6 @@ const FILENAME_PATTERNS: &[(&str, &str)] = &[
     ("mubert_", "mubert"),
     ("boomy_", "boomy"),
     ("beatoven_", "beatoven"),
-    // Image/video tools with distinctive filenames
     ("dall-e", "dall-e"),
     ("dalle", "dall-e"),
     ("midjourney", "midjourney"),
@@ -31,46 +29,39 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     let lower = filename.to_lowercase();
     let mut signals = Vec::new();
 
-    // Check against known filename patterns
     for &(pattern, tool_name) in FILENAME_PATTERNS {
         if lower.contains(pattern) {
-            signals.push(Signal {
-                source: SignalSource::Filename,
-                confidence: Confidence::Low,
-                description: format!("Filename matches AI tool pattern: {}", pattern),
-                tool: Some(tool_name.to_string()),
-                details: vec![("filename".to_string(), filename.to_string())],
-            });
-            break; // One match is enough
+            signals.push(
+                SignalBuilder::new(SignalSource::Filename, Confidence::Low, "signal_filename_pattern")
+                    .param("pattern", pattern)
+                    .tool(tool_name)
+                    .detail("filename", filename)
+                    .build(),
+            );
+            break;
         }
     }
 
-    // ElevenLabs specific pattern: ElevenLabs_YYYY-MM-DDTHH_MM_SS_*
     if signals.is_empty() && detect_elevenlabs_pattern(&lower) {
-        signals.push(Signal {
-            source: SignalSource::Filename,
-            confidence: Confidence::Low,
-            description: "Filename matches ElevenLabs naming convention".to_string(),
-            tool: Some("elevenlabs".to_string()),
-            details: vec![("filename".to_string(), filename.to_string())],
-        });
+        signals.push(
+            SignalBuilder::new(SignalSource::Filename, Confidence::Low, "signal_filename_elevenlabs")
+                .tool("elevenlabs")
+                .detail("filename", filename)
+                .build(),
+        );
     }
 
     Ok(signals)
 }
 
-/// Check for ElevenLabs timestamp pattern: elevenlabs_YYYY-MM-DDTHH_MM_SS_
 fn detect_elevenlabs_pattern(lower: &str) -> bool {
     if !lower.starts_with("elevenlabs_") {
         return false;
     }
     let rest = &lower["elevenlabs_".len()..];
-    // Expect: YYYY-MM-DDTHH_MM_SS_
-    // Minimum: 2024-01-01T00_00_00_ = 20 chars
     if rest.len() < 20 {
         return false;
     }
-    // Check date-time format loosely
     let bytes = rest.as_bytes();
     bytes[4] == b'-' && bytes[7] == b'-' && bytes[10] == b't' && bytes[13] == b'_' && bytes[16] == b'_'
 }

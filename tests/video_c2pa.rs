@@ -24,7 +24,7 @@ fn mp4_with_c2pa_json_output() {
 #[test]
 fn mp4_without_c2pa_not_detected() {
     cargo_bin_cmd!("aic")
-        .args(["check", "tests/fixtures/no_c2pa.mp4"])
+        .args(["--lang", "en", "check", "tests/fixtures/no_c2pa.mp4"])
         .assert()
         .code(1) // exit 1 = no AI detected
         .stdout(predicate::str::contains("No AI-generation signals detected"));

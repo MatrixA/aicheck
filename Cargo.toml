@@ -27,6 +27,8 @@ walkdir = "2"
 id3 = "1"
 rustfft = "6"
 quick-xml = "0.36"
+rust-i18n = "3"
+sys-locale = "0.3"
 
 [dev-dependencies]
 assert_cmd = "2"

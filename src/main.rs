@@ -1,5 +1,6 @@
 mod cli;
 mod detector;
+mod i18n;
 mod known_tools;
 mod output;
 mod scanner;
@@ -9,12 +10,16 @@ use cli::{Cli, Command};
 use colored::control::set_override;
 use std::process::ExitCode;
 
+rust_i18n::i18n!("locales", fallback = "en");
+
 fn main() -> ExitCode {
     let args = Cli::parse();
 
     if args.no_color {
         set_override(false);
     }
+
+    i18n::init_locale(args.lang.as_deref());
 
     match args.command {
         Command::Check(ref check_args) => cmd_check(&args, check_args),
@@ -27,7 +32,7 @@ fn cmd_check(args: &Cli, check_args: &cli::CheckArgs) -> ExitCode {
         Ok(f) => f,
         Err(e) => {
             if !args.quiet {
-                eprintln!("Error: {}", e);
+                eprintln!("{}", i18n::t("error_generic", &[("msg", &e.to_string())]));
             }
             return ExitCode::from(2);
         }
@@ -35,7 +40,7 @@ fn cmd_check(args: &Cli, check_args: &cli::CheckArgs) -> ExitCode {
 
     if files.is_empty() {
         if !args.quiet {
-            eprintln!("No supported files found.");
+            eprintln!("{}", i18n::t("error_no_files", &[]));
         }
         return ExitCode::from(2);
     }
@@ -80,7 +85,10 @@ fn cmd_info(info_args: &cli::InfoArgs) -> ExitCode {
     let path = &info_args.file;
 
     if !path.exists() {
-        eprintln!("Error: {} not found", path.display());
+        eprintln!(
+            "{}",
+            i18n::t("error_not_found", &[("path", &path.display().to_string())])
+        );
         return ExitCode::from(2);
     }
 

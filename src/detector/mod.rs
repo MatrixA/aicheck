@@ -12,6 +12,8 @@ pub mod xmp;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
+use crate::i18n;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Confidence {
@@ -21,14 +23,21 @@ pub enum Confidence {
     High,
 }
 
+impl Confidence {
+    /// Localized display string for human output.
+    pub fn localized(&self) -> String {
+        match self {
+            Confidence::None => i18n::t("confidence_none", &[]),
+            Confidence::Low => i18n::t("confidence_low", &[]),
+            Confidence::Medium => i18n::t("confidence_medium", &[]),
+            Confidence::High => i18n::t("confidence_high", &[]),
+        }
+    }
+}
+
 impl std::fmt::Display for Confidence {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Confidence::None => write!(f, "NONE"),
-            Confidence::Low => write!(f, "LOW"),
-            Confidence::Medium => write!(f, "MEDIUM"),
-            Confidence::High => write!(f, "HIGH"),
-        }
+        write!(f, "{}", self.localized())
     }
 }
 
@@ -68,11 +77,99 @@ impl std::fmt::Display for SignalSource {
 pub struct Signal {
     pub source: SignalSource,
     pub confidence: Confidence,
+    /// Always English — used for JSON serialization.
     pub description: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub details: Vec<(String, String)>,
+    /// Translation key for localized output.
+    #[serde(skip)]
+    pub msg_key: String,
+    /// Translation parameters for localized output.
+    #[serde(skip)]
+    pub msg_params: Vec<(String, String)>,
+}
+
+impl Signal {
+    /// Render the localized description for human output.
+    pub fn localized_description(&self) -> String {
+        if self.msg_key.is_empty() {
+            return self.description.clone();
+        }
+        let params: Vec<(&str, &str)> = self
+            .msg_params
+            .iter()
+            .map(|(k, v)| (k.as_str(), v.as_str()))
+            .collect();
+        i18n::t(&self.msg_key, &params)
+    }
+}
+
+/// Builder for creating Signal with both English description and i18n key.
+pub struct SignalBuilder {
+    source: SignalSource,
+    confidence: Confidence,
+    msg_key: String,
+    msg_params: Vec<(String, String)>,
+    tool: Option<String>,
+    details: Vec<(String, String)>,
+}
+
+impl SignalBuilder {
+    pub fn new(source: SignalSource, confidence: Confidence, key: &str) -> Self {
+        Self {
+            source,
+            confidence,
+            msg_key: key.to_string(),
+            msg_params: Vec::new(),
+            tool: None,
+            details: Vec::new(),
+        }
+    }
+
+    pub fn param(mut self, name: &str, value: impl Into<String>) -> Self {
+        self.msg_params.push((name.to_string(), value.into()));
+        self
+    }
+
+    pub fn tool(mut self, tool: impl Into<String>) -> Self {
+        self.tool = Some(tool.into());
+        self
+    }
+
+    pub fn tool_opt(mut self, tool: Option<String>) -> Self {
+        self.tool = tool;
+        self
+    }
+
+    pub fn details(mut self, details: Vec<(String, String)>) -> Self {
+        self.details = details;
+        self
+    }
+
+    pub fn detail(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.details.push((key.into(), value.into()));
+        self
+    }
+
+    pub fn build(self) -> Signal {
+        let params: Vec<(&str, &str)> = self
+            .msg_params
+            .iter()
+            .map(|(k, v)| (k.as_str(), v.as_str()))
+            .collect();
+        let description = i18n::t_en(&self.msg_key, &params);
+        Signal {
+            source: self.source,
+            confidence: self.confidence,
+            description,
+            tool: self.tool,
+            details: self.details,
+            msg_key: self.msg_key,
+            msg_params: self.msg_params,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -132,7 +229,6 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
     match c2pa_detector::detect(path) {
         Ok(sigs) => signals.extend(sigs),
         Err(e) => {
-            // C2PA errors are non-fatal (file may just not have a manifest)
             if std::env::var("AIC_DEBUG").is_ok() {
                 eprintln!("  [debug] C2PA: {}", e);
             }
@@ -212,7 +308,6 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
     }
 
     // Audio spectral analysis (WAV files — frequency cutoff, spectral flatness)
-    // Run if --deep is set OR as automatic fallback when no metadata signals found
     if deep || signals.is_empty() {
         match audio_spectral::detect(path) {
             Ok(sigs) => signals.extend(sigs),
@@ -225,7 +320,6 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
     }
 
     // Watermark detector — pixel-level analysis
-    // Run if --deep is set OR as automatic fallback when no metadata signals found
     if deep || signals.is_empty() {
         match watermark::detect(path) {
             Ok(sigs) => signals.extend(sigs),
