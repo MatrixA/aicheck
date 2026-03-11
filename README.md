@@ -1,6 +1,17 @@
-> **English** | [简体中文](README.zh-CN.md)
+> **English** | [简体中文](README.zh-CN.md) | [Deutsch](README.de.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [हिन्दी](README.hi.md) | [Español](README.es.md)
+
+<div align="center">
 
 # AICheck
+
+**Detect AI-generated content. Offline. No API keys. No setup.**
+
+[![CI](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml/badge.svg)](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/aicheck)](https://crates.io/crates/aicheck)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.86%2B-orange.svg)](https://www.rust-lang.org/)
+
+</div>
 
 *That viral image — AI or real?*
 *Which model generated this video?*
@@ -12,19 +23,13 @@ AICheck answers these questions by analyzing file metadata and invisible waterma
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
 ```bash
 cargo install aicheck
 ```
 
-Or build from source:
-
-```bash
-cargo install --path .
-```
-
-> Requires Rust 1.86+
+> Requires Rust 1.86+. Or build from source: `cargo install --path .`
 
 ```bash
 aic check photo.jpg
@@ -43,7 +48,7 @@ real_photo.jpg
 
 ---
 
-## How It Works
+## 🔍 How It Works
 
 ```
                               your file
@@ -92,7 +97,7 @@ real_photo.jpg
 
 ---
 
-## What It Recognizes
+## 🎯 What It Recognizes
 
 ### AI Tools
 
@@ -117,7 +122,7 @@ real_photo.jpg
 
 ---
 
-## Commands
+## 💻 Commands
 
 ### `aic check [PATHS]`
 
@@ -159,7 +164,7 @@ aic info photo.jpg
 
 ---
 
-## What It Can't Do
+## ⚠️ Limitations
 
 - **Stripped metadata = invisible.** If someone removes the metadata, there's nothing to detect. Social platforms do this on upload — always analyze the original file.
 - **Most AI images have no watermark.** Only ~19% of AI images carry detectable provenance markers (2025 data).
@@ -168,6 +173,6 @@ aic info photo.jpg
 
 ---
 
-## License
+## 📄 License
 
-MIT
+[AGPL-3.0](LICENSE)
