@@ -1,8 +1,12 @@
+pub mod audio_spectral;
 pub mod c2pa_detector;
 pub mod exif;
+pub mod filename;
+pub mod id3_metadata;
 pub mod mp4_metadata;
 pub mod png_text;
 pub mod watermark;
+pub mod wav_metadata;
 pub mod xmp;
 
 use serde::Serialize;
@@ -35,8 +39,12 @@ pub enum SignalSource {
     Xmp,
     Exif,
     Watermark,
+    AudioSpectral,
+    Filename,
+    Id3Metadata,
     Mp4Metadata,
     PngText,
+    WavMetadata,
 }
 
 impl std::fmt::Display for SignalSource {
@@ -46,8 +54,12 @@ impl std::fmt::Display for SignalSource {
             SignalSource::Xmp => write!(f, "XMP"),
             SignalSource::Exif => write!(f, "EXIF"),
             SignalSource::Watermark => write!(f, "WATERMARK"),
+            SignalSource::AudioSpectral => write!(f, "SPEC"),
+            SignalSource::Filename => write!(f, "FILE"),
+            SignalSource::Id3Metadata => write!(f, "ID3"),
             SignalSource::Mp4Metadata => write!(f, "MP4"),
             SignalSource::PngText => write!(f, "PNG"),
+            SignalSource::WavMetadata => write!(f, "WAV"),
         }
     }
 }
@@ -137,6 +149,26 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
         }
     }
 
+    // ID3 metadata detector (audio files: MP3 ID3v2 tags)
+    match id3_metadata::detect(path) {
+        Ok(sigs) => signals.extend(sigs),
+        Err(e) => {
+            if std::env::var("AIC_DEBUG").is_ok() {
+                eprintln!("  [debug] ID3 Metadata: {}", e);
+            }
+        }
+    }
+
+    // WAV metadata detector (RIFF INFO chunks + audio heuristics)
+    match wav_metadata::detect(path) {
+        Ok(sigs) => signals.extend(sigs),
+        Err(e) => {
+            if std::env::var("AIC_DEBUG").is_ok() {
+                eprintln!("  [debug] WAV Metadata: {}", e);
+            }
+        }
+    }
+
     // XMP detector
     match xmp::detect(path) {
         Ok(sigs) => signals.extend(sigs),
@@ -165,6 +197,29 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
         Err(e) => {
             if std::env::var("AIC_DEBUG").is_ok() {
                 eprintln!("  [debug] EXIF: {}", e);
+            }
+        }
+    }
+
+    // Filename pattern detector
+    match filename::detect(path) {
+        Ok(sigs) => signals.extend(sigs),
+        Err(e) => {
+            if std::env::var("AIC_DEBUG").is_ok() {
+                eprintln!("  [debug] Filename: {}", e);
+            }
+        }
+    }
+
+    // Audio spectral analysis (WAV files — frequency cutoff, spectral flatness)
+    // Run if --deep is set OR as automatic fallback when no metadata signals found
+    if deep || signals.is_empty() {
+        match audio_spectral::detect(path) {
+            Ok(sigs) => signals.extend(sigs),
+            Err(e) => {
+                if std::env::var("AIC_DEBUG").is_ok() {
+                    eprintln!("  [debug] Audio Spectral: {}", e);
+                }
             }
         }
     }
