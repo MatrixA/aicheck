@@ -29,7 +29,7 @@ AICheck responde estas preguntas analizando los metadatos de archivos y marcas d
 cargo install aicheck
 ```
 
-> Requiere Rust 1.86+. O compilar desde el código fuente: `cargo install --path .`
+> Requiere [Rust 1.86+](https://rust-lang.org/tools/install/). O compilar desde el código fuente: `cargo install --path .`
 
 ```bash
 aic check photo.jpg

@@ -29,7 +29,7 @@ AICheck beantwortet diese Fragen durch Analyse von Datei-Metadaten und unsichtba
 cargo install aicheck
 ```
 
-> Erfordert Rust 1.86+. Oder aus dem Quellcode bauen: `cargo install --path .`
+> Erfordert [Rust 1.86+](https://rust-lang.org/tools/install/). Oder aus dem Quellcode bauen: `cargo install --path .`
 
 ```bash
 aic check photo.jpg

@@ -19,7 +19,7 @@ cargo test
 cargo run -- check photo.jpg
 ```
 
-Requires **Rust 1.86+**.
+Requires [**Rust 1.86+**](https://rust-lang.org/tools/install/).
 
 ## Before Submitting a PR
 
