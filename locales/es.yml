@@ -13,6 +13,7 @@ confidence_high: "ALTO"
 
 # Interfaz de salida
 output_no_signals: "No se detectaron señales de generación por IA."
+output_hint_check_original: "Consejo: Las redes sociales y apps de mensajería suelen eliminar los metadatos al subir archivos. Para mejores resultados, analice el archivo original."
 output_summary: "Resultados: %{detected}/%{total} archivos con señales de IA (%{high} ALTO, %{medium} MEDIO, %{low} BAJO)"
 output_type_label: "Tipo: %{mime}"
 
@@ -64,3 +65,4 @@ signal_audio_cutoff: "Corte de frecuencia abrupto en %{freq}Hz (%{pct}%% de %{ny
 signal_audio_flatness: "Planitud espectral %{value} sugiere audio sintético (el habla natural típicamente > 0,05)"
 signal_wav_info_tool: "WAV INFO %{key} coincide con herramienta de IA: %{value}"
 signal_wav_tts_heuristic: "Características de audio sugieren TTS: mono %{rate}Hz %{bits}bit"
+signal_video_frame_watermark: "Indicadores de marca de agua detectados en fotograma de video (en %{frame}): %{indicators}"

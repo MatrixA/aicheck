@@ -51,7 +51,7 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
     "elevenlabs",
     "eleven labs",
     "suno",
-    "udio.com",
+    "udio",
     "soundraw",
     "aiva",
     "boomy",
@@ -59,6 +59,21 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
     "loudly.com",
     "beatoven",
     "soundful",
+    // New image generation tools
+    "grok",
+    "gemini",
+    "jimeng",
+    "即梦",
+    // New video generation tools
+    "luma",
+    "hailuo",
+    "海螺",
+    "pixverse",
+    "genmo",
+    "haiper",
+    // New audio generation tools
+    "hume",
+    "fish audio",
 ];
 
 /// Check if a string contains any known AI tool pattern (case-insensitive).

@@ -13,6 +13,7 @@ confidence_high: "HOCH"
 
 # Ausgabe
 output_no_signals: "Keine KI-Generierungssignale erkannt."
+output_hint_check_original: "Tipp: Soziale Medien und Messaging-Apps entfernen beim Hochladen häufig Metadaten. Analysieren Sie für beste Ergebnisse die Originaldatei."
 output_summary: "Ergebnisse: %{detected}/%{total} Dateien mit KI-Signalen (%{high} HOCH, %{medium} MITTEL, %{low} NIEDRIG)"
 output_type_label: "Typ: %{mime}"
 
@@ -64,3 +65,4 @@ signal_audio_cutoff: "Harte Frequenzabschaltung bei %{freq}Hz (%{pct}%% von %{ny
 signal_audio_flatness: "Spektrale Flachheit %{value} deutet auf synthetisches Audio hin (natürliche Sprache typischerweise > 0,05)"
 signal_wav_info_tool: "WAV INFO %{key} stimmt mit KI-Tool überein: %{value}"
 signal_wav_tts_heuristic: "Audioeigenschaften deuten auf TTS hin: Mono %{rate}Hz %{bits}bit"
+signal_video_frame_watermark: "Wasserzeichen-Indikatoren in Videobild erkannt (bei %{frame}): %{indicators}"

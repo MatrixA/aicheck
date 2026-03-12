@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::path::Path;
+use std::process::Command;
 
 use super::{Confidence, Signal, SignalBuilder, SignalSource};
 use crate::i18n;
@@ -353,6 +354,131 @@ fn haar_dwt_2d(data: &[f64], width: usize, height: usize) -> DwtSubbands {
         }
     }
     DwtSubbands { ll, lh, hl, hh }
+}
+
+/// Number of frames to extract from a video for watermark analysis.
+const VIDEO_FRAME_COUNT: usize = 3;
+
+/// Analyze video frames for invisible watermarks by extracting keyframes via ffmpeg.
+/// Returns empty if ffmpeg is not available or extraction fails.
+pub fn detect_video(path: &Path) -> Result<Vec<Signal>> {
+    let debug = std::env::var("AIC_DEBUG").is_ok();
+
+    // Check if ffmpeg is available
+    if Command::new("ffmpeg").arg("-version").output().is_err() {
+        if debug {
+            eprintln!("  [debug] Watermark video: ffmpeg not found, skipping frame analysis");
+        }
+        return Ok(vec![]);
+    }
+
+    // Get video duration via ffprobe
+    let duration = get_video_duration(path);
+    if duration.is_none() {
+        if debug {
+            eprintln!("  [debug] Watermark video: could not determine duration");
+        }
+        return Ok(vec![]);
+    }
+    let duration = duration.unwrap();
+    if duration < 0.5 {
+        return Ok(vec![]);
+    }
+
+    let tmp_dir = tempfile::tempdir().context("Failed to create temp dir for video frames")?;
+    let mut all_signals = Vec::new();
+
+    // Extract frames at evenly spaced positions (25%, 50%, 75%)
+    for i in 1..=VIDEO_FRAME_COUNT {
+        let timestamp = duration * i as f64 / (VIDEO_FRAME_COUNT as f64 + 1.0);
+        let frame_path = tmp_dir.path().join(format!("frame_{}.png", i));
+
+        let status = Command::new("ffmpeg")
+            .args([
+                "-ss",
+                &format!("{:.2}", timestamp),
+                "-i",
+                &path.to_string_lossy(),
+                "-frames:v",
+                "1",
+                "-q:v",
+                "1",
+                &frame_path.to_string_lossy(),
+                "-y",
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status();
+
+        if let Ok(s) = status {
+            if s.success() && frame_path.exists() {
+                if debug {
+                    eprintln!(
+                        "  [debug] Watermark video: analyzing frame {} at {:.1}s",
+                        i, timestamp
+                    );
+                }
+                match detect(&frame_path) {
+                    Ok(signals) if !signals.is_empty() => {
+                        // Re-wrap signals with video frame context
+                        for signal in signals {
+                            let indicators = signal
+                                .details
+                                .iter()
+                                .map(|(k, v)| format!("{}={}", k, v))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            all_signals.push(
+                                SignalBuilder::new(
+                                    SignalSource::Watermark,
+                                    Confidence::Low,
+                                    "signal_video_frame_watermark",
+                                )
+                                .param("frame", &format!("{:.1}s", timestamp))
+                                .param(
+                                    "indicators",
+                                    if indicators.is_empty() {
+                                        &signal.description
+                                    } else {
+                                        &indicators
+                                    },
+                                )
+                                .details(signal.details)
+                                .build(),
+                            );
+                        }
+                        // One positive frame is enough evidence
+                        break;
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        if debug {
+                            eprintln!("  [debug] Watermark video frame {}: {}", i, e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(all_signals)
+}
+
+fn get_video_duration(path: &Path) -> Option<f64> {
+    let output = Command::new("ffprobe")
+        .args([
+            "-v",
+            "quiet",
+            "-print_format",
+            "default=noprint_wrappers=1:nokey=1",
+            "-show_entries",
+            "format=duration",
+            &path.to_string_lossy(),
+        ])
+        .output()
+        .ok()?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    stdout.trim().parse::<f64>().ok()
 }
 
 #[cfg(test)]
