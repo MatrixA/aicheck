@@ -19,7 +19,7 @@
 
 AICheck는 파일 메타데이터와 보이지 않는 워터마크를 분석하여 이런 질문에 답합니다. API 키 불필요, 네트워크 불필요, 설정 불필요.
 
-**10가지 감지 방법** · **51개 AI 도구** · **16가지 파일 형식** · **3단계 신뢰도** · **네트워크 요청 제로**
+**10가지 감지 방법** · **61개 AI 도구** · **16가지 파일 형식** · **3단계 신뢰도** · **네트워크 요청 제로**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **XMP/IPTC 메타데이터 (MEDIUM 신뢰도)** — 표준 사진 메타데이터: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. 신뢰할 수 있지만 서명되지 않음 — 위조하거나 제거할 수 있습니다.
 
-**MP4 컨테이너 메타데이터 (MEDIUM 신뢰도)** — iTunes 스타일 아톰(`©too`, `©swr`), AIGC 라벨(중국 표준, JSON `ProduceID` 포함), H.264 SEI 워터마크 마커(예: Kling)를 분석합니다. 다른 방법이 놓치는 비디오 컨테이너에 내장된 AI 신호를 감지합니다.
+**MP4 컨테이너 메타데이터 (MEDIUM 신뢰도)** — iTunes 스타일 아톰(`©too`, `©swr`), AIGC 라벨(중국 표준, JSON `ProduceID` 포함), H.264 SEI 워터마크 마커(Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper)를 분석합니다. 비AI 제작 소프트웨어(FFmpeg, Remotion, Premiere 등)도 정보 표시용으로 감지합니다. 다른 방법이 놓치는 비디오 컨테이너에 내장된 AI 신호를 감지합니다.
 
 **ID3 오디오 메타데이터 (MEDIUM 신뢰도)** — MP3 파일의 ID3v2 태그를 읽습니다: 코멘트 프레임(COMM), URL 프레임(WOAS/WOAF/WXXX), 텍스트 프레임(TENC/TPUB/TXXX). Suno 같은 AI 오디오 플랫폼을 감지합니다(내장 URL과 "made with suno" 코멘트를 통해).
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **오디오 스펙트럼 분석 (LOW 신뢰도)** — FFT 기반 WAV 오디오 분석: 하드 주파수 컷오프(나이퀴스트 이하에 에너지 집중)와 TTS/AI 합성에 전형적인 비정상적 스펙트럼 평탄도를 감지합니다. 폴백으로 또는 `--deep`으로 실행됩니다.
 
-**보이지 않는 워터마크 (LOW 신뢰도)** — 픽셀 수준의 DWT-DCT 분석으로 채널 노이즈 비대칭, 채널 간 비트 일치, 웨이블릿 에너지 패턴을 감지합니다. 메타데이터 신호가 발견되지 않으면 자동으로 폴백 실행되거나, `--deep`으로 요청 시 실행됩니다.
+**보이지 않는 워터마크 (LOW 신뢰도)** — 픽셀 수준의 DWT-DCT 분석으로 채널 노이즈 비대칭, 채널 간 비트 일치, 웨이블릿 에너지 패턴을 감지합니다. 영상의 경우 `ffmpeg`를 통해 자동으로 키프레임을 추출하여 개별 분석합니다. 메타데이터 신호가 발견되지 않으면 자동으로 폴백 실행되거나, `--deep`으로 요청 시 실행됩니다.
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | 카테고리 | 도구 |
 |---------|------|
-| 이미지 생성 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| 영상 생성 | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| 오디오/음악 생성 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| 멀티모달 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| 이미지 생성 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| 영상 생성 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| 오디오/음악 생성 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| 멀티모달 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | 플랫폼 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 인터페이스 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | 연구 | Glide, Parti, Muse, Seedream, Recraft |

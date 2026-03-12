@@ -19,7 +19,7 @@
 
 AICheck answers these questions by analyzing file metadata and invisible watermarks. No API keys, no network, no setup.
 
-**10 detection methods** · **51 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
+**10 detection methods** · **61 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **XMP/IPTC Metadata (MEDIUM confidence)** — Standard photo metadata: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Reliable but unsigned — can be faked or stripped.
 
-**MP4 Container Metadata (MEDIUM confidence)** — Parses iTunes-style atoms (`©too`, `©swr`), AIGC labels (China standard with JSON `ProduceID`), and H.264 SEI watermark markers (e.g. Kling). Catches AI signals baked into video containers that other methods miss.
+**MP4 Container Metadata (MEDIUM confidence)** — Parses iTunes-style atoms (`©too`, `©swr`), AIGC labels (China standard with JSON `ProduceID`), and H.264 SEI watermark markers (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). Also detects non-AI creation software (FFmpeg, Remotion, Premiere, etc.) for informational display. Catches AI signals baked into video containers that other methods miss.
 
 **ID3 Audio Metadata (MEDIUM confidence)** — Reads ID3v2 tags from MP3 files: comment frames (COMM), URL frames (WOAS/WOAF/WXXX), and text frames (TENC/TPUB/TXXX). Detects AI audio platforms like Suno (via embedded URLs and "made with suno" comments).
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **Audio Spectral Analysis (LOW confidence)** — FFT-based analysis of WAV audio: detects hard frequency cutoffs (energy concentrated below Nyquist) and abnormal spectral flatness typical of TTS/AI synthesis. Runs as a fallback or with `--deep`.
 
-**Invisible Watermarks (LOW confidence)** — Pixel-level DWT-DCT analysis that detects channel noise asymmetry, cross-channel bit agreement, and wavelet energy patterns. Runs automatically as a fallback when no metadata signals are found, or on demand with `--deep`.
+**Invisible Watermarks (LOW confidence)** — Pixel-level DWT-DCT analysis that detects channel noise asymmetry, cross-channel bit agreement, and wavelet energy patterns. For videos, automatically extracts keyframes via `ffmpeg` and analyzes them individually. Runs automatically as a fallback when no metadata signals are found, or on demand with `--deep`.
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | Category | Tools |
 |----------|-------|
-| Image generation | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| Video generation | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| Audio/Music generation | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| Image generation | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| Video generation | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| Audio/Music generation | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | Platforms | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Interfaces | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | Research | Glide, Parti, Muse, Seedream, Recraft |

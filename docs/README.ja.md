@@ -19,7 +19,7 @@
 
 AICheckはファイルのメタデータと不可視ウォーターマークを分析してこれらの疑問に答えます。APIキー不要、ネットワーク不要、セットアップ不要。
 
-**10種の検出方法** · **51種のAIツール** · **16種のファイル形式** · **3段階の信頼度** · **ネットワーク通信ゼロ**
+**10種の検出方法** · **61種のAIツール** · **16種のファイル形式** · **3段階の信頼度** · **ネットワーク通信ゼロ**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **XMP/IPTCメタデータ（MEDIUM信頼度）**— 標準的な写真メタデータ：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`。信頼性は高いが署名なし——偽造や削除が可能。
 
-**MP4コンテナメタデータ（MEDIUM信頼度）**— iTunes形式のアトム（`©too`、`©swr`）、AIGCラベル（中国規格、JSON `ProduceID`付き）、H.264 SEIウォーターマークマーカー（例：Kling）を解析。他の方法では見逃されるビデオコンテナに埋め込まれたAIシグナルを検出。
+**MP4コンテナメタデータ（MEDIUM信頼度）**— iTunes形式のアトム（`©too`、`©swr`）、AIGCラベル（中国規格、JSON `ProduceID`付き）、H.264 SEIウォーターマークマーカー（Kling、Sora、Runway、Pika、Luma、Hailuo、Pixverse、Vidu、Genmo、Haiper）を解析。非AI制作ソフトウェア（FFmpeg、Remotion、Premiereなど）も情報表示として検出。他の方法では見逃されるビデオコンテナに埋め込まれたAIシグナルを検出。
 
 **ID3音声メタデータ（MEDIUM信頼度）**— MP3ファイルのID3v2タグを読み取り：コメントフレーム（COMM）、URLフレーム（WOAS/WOAF/WXXX）、テキストフレーム（TENC/TPUB/TXXX）。SunoなどのAI音声プラットフォームを検出（埋め込みURLや「made with suno」コメント経由）。
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **音声スペクトル分析（LOW信頼度）**— FFTベースのWAV音声分析：硬い周波数カットオフ（ナイキスト以下にエネルギーが集中）とTTS/AI合成に典型的な異常なスペクトル平坦度を検出。フォールバックとして、または`--deep`で実行。
 
-**不可視ウォーターマーク（LOW信頼度）**— ピクセルレベルのDWT-DCT分析で、チャンネルノイズの非対称性、チャンネル間ビット一致、ウェーブレットエネルギーパターンを検出。メタデータシグナルが見つからない場合に自動的にフォールバックとして実行、または`--deep`でオンデマンド実行。
+**不可視ウォーターマーク（LOW信頼度）**— ピクセルレベルのDWT-DCT分析で、チャンネルノイズの非対称性、チャンネル間ビット一致、ウェーブレットエネルギーパターンを検出。動画の場合は`ffmpeg`でキーフレームを自動抽出し、個別に分析。メタデータシグナルが見つからない場合に自動的にフォールバックとして実行、または`--deep`でオンデマンド実行。
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | カテゴリ | ツール |
 |---------|--------|
-| 画像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| 動画生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| 音声/音楽生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| マルチモーダル | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| 画像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| 動画生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| 音声/音楽生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| マルチモーダル | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | プラットフォーム | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | インターフェース | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | 研究 | Glide, Parti, Muse, Seedream, Recraft |

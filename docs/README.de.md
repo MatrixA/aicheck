@@ -19,7 +19,7 @@
 
 AICheck beantwortet diese Fragen durch Analyse von Datei-Metadaten und unsichtbaren Wasserzeichen. Keine API-Keys, kein Netzwerk, keine Einrichtung.
 
-**10 Erkennungsmethoden** · **51 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
+**10 Erkennungsmethoden** · **61 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **XMP/IPTC-Metadaten (MEDIUM Konfidenz)** — Standard-Foto-Metadaten: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Zuverlässig, aber nicht signiert — kann gefälscht oder entfernt werden.
 
-**MP4-Container-Metadaten (MEDIUM Konfidenz)** — Analysiert iTunes-Stil-Atome (`©too`, `©swr`), AIGC-Labels (chinesischer Standard mit JSON `ProduceID`) und H.264-SEI-Wasserzeichenmarker (z.B. Kling). Erfasst KI-Signale, die in Videocontainern eingebettet sind und von anderen Methoden übersehen werden.
+**MP4-Container-Metadaten (MEDIUM Konfidenz)** — Analysiert iTunes-Stil-Atome (`©too`, `©swr`), AIGC-Labels (chinesischer Standard mit JSON `ProduceID`) und H.264-SEI-Wasserzeichenmarker (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). Erkennt auch nicht-KI-Erstellungssoftware (FFmpeg, Remotion, Premiere usw.) zur informativen Anzeige. Erfasst KI-Signale, die in Videocontainern eingebettet sind und von anderen Methoden übersehen werden.
 
 **ID3-Audio-Metadaten (MEDIUM Konfidenz)** — Liest ID3v2-Tags aus MP3-Dateien: Kommentarframes (COMM), URL-Frames (WOAS/WOAF/WXXX) und Textframes (TENC/TPUB/TXXX). Erkennt KI-Audioplattformen wie Suno (über eingebettete URLs und „made with suno"-Kommentare).
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **Audio-Spektralanalyse (LOW Konfidenz)** — FFT-basierte Analyse von WAV-Audio: erkennt harte Frequenzabschneide (Energie konzentriert unterhalb von Nyquist) und abnormale spektrale Flachheit, typisch für TTS/KI-Synthese. Läuft als Fallback oder mit `--deep`.
 
-**Unsichtbare Wasserzeichen (LOW Konfidenz)** — Pixelbasierte DWT-DCT-Analyse, die Kanalrauschen-Asymmetrie, kanalübergreifende Bit-Übereinstimmung und Wavelet-Energiemuster erkennt. Läuft automatisch als Fallback, wenn keine Metadaten-Signale gefunden werden, oder auf Anforderung mit `--deep`.
+**Unsichtbare Wasserzeichen (LOW Konfidenz)** — Pixelbasierte DWT-DCT-Analyse, die Kanalrauschen-Asymmetrie, kanalübergreifende Bit-Übereinstimmung und Wavelet-Energiemuster erkennt. Bei Videos werden automatisch Keyframes über `ffmpeg` extrahiert und einzeln analysiert. Läuft automatisch als Fallback, wenn keine Metadaten-Signale gefunden werden, oder auf Anforderung mit `--deep`.
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | Kategorie | Tools |
 |-----------|-------|
-| Bildgenerierung | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| Videogenerierung | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| Audio-/Musikgenerierung | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| Bildgenerierung | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| Videogenerierung | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| Audio-/Musikgenerierung | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | Plattformen | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Oberflächen | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | Forschung | Glide, Parti, Muse, Seedream, Recraft |

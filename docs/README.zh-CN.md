@@ -19,7 +19,7 @@
 
 AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需要 API key，不需要联网，不需要配置。
 
-**10 种检测方法** · **51 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
+**10 种检测方法** · **61 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **XMP/IPTC 元数据（MEDIUM 置信度）**— 标准照片元数据：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`。可靠但没有签名——可以伪造或删除。
 
-**MP4 容器元数据（MEDIUM 置信度）**— 解析 iTunes 风格原子（`©too`、`©swr`）、AIGC 标签（中国标准，含 JSON `ProduceID`）和 H.264 SEI 水印标记（如 Kling）。能捕获嵌入视频容器中的 AI 信号。
+**MP4 容器元数据（MEDIUM 置信度）**— 解析 iTunes 风格原子（`©too`、`©swr`）、AIGC 标签（中国标准，含 JSON `ProduceID`）和 H.264 SEI 水印标记（Kling、Sora、Runway、Pika、Luma、Hailuo、Pixverse、Vidu、Genmo、Haiper）。同时检测非 AI 创作软件（FFmpeg、Remotion、Premiere 等）作为信息展示。能捕获嵌入视频容器中的 AI 信号。
 
 **ID3 音频元数据（MEDIUM 置信度）**— 读取 MP3 文件的 ID3v2 标签：注释帧（COMM）、URL 帧（WOAS/WOAF/WXXX）和文本帧（TENC/TPUB/TXXX）。可检测 Suno 等 AI 音频平台（通过嵌入的 URL 和「made with suno」注释）。
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **音频频谱分析（LOW 置信度）**— 基于 FFT 的 WAV 音频分析：检测硬频率截断（能量集中在奈奎斯特频率以下）和异常的频谱平坦度，这些是 TTS/AI 合成的典型特征。作为后备方案自动运行，或通过 `--deep` 强制启用。
 
-**隐形水印（LOW 置信度）**— 像素级 DWT-DCT 分析，检测通道噪声不对称性、跨通道比特一致性和小波能量模式。当未检测到元数据信号时自动运行，也可通过 `--deep` 强制启用。
+**隐形水印（LOW 置信度）**— 像素级 DWT-DCT 分析，检测通道噪声不对称性、跨通道比特一致性和小波能量模式。对于视频文件，自动通过 `ffmpeg` 提取关键帧并逐帧分析。当未检测到元数据信号时自动运行，也可通过 `--deep` 强制启用。
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | 类别 | 工具 |
 |------|------|
-| 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| 音频/音乐生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| 音频/音乐生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | 平台 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 界面工具 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | 研究项目 | Glide, Parti, Muse, Seedream, Recraft |
