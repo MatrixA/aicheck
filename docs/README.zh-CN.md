@@ -29,7 +29,7 @@ AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需
 cargo install aicheck
 ```
 
-> 需要 Rust 1.86+。从源码构建：`cargo install --path .`
+> 需要 [Rust 1.86+](https://rust-lang.org/tools/install/)。从源码构建：`cargo install --path .`
 
 ```bash
 aic check photo.jpg
