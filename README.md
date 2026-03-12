@@ -21,6 +21,8 @@ AICheck answers these questions by analyzing file metadata and invisible waterma
 
 **10 detection methods** · **61 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
 
+[![Demo Video](https://img.youtube.com/vi/1u-6TkHtWiA/maxresdefault.jpg)](https://youtu.be/1u-6TkHtWiA)
+
 ---
 
 ## ⚡ Quick Start
