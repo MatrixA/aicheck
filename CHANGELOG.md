@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- 10 new AI tool recognitions: Grok, Gemini, Jimeng (即梦), Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Hume, Fish Audio (51 → 61 tools)
+- Video frame watermark analysis: extracts keyframes via `ffmpeg` and runs DWT-DCT analysis on video content
+- Creation software detection: displays non-AI tools (FFmpeg, Remotion, Premiere, etc.) as informational metadata
+- 9 new MP4 SEI watermark markers: Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper
+- Metadata stripping hint when no signals are detected (all 7 languages)
+
+### Fixed
+
+- Udio pattern matching: `udio.com` → `udio` for broader text matching
+
 ## [0.1.0] - 2025-06-01
 
 ### Added

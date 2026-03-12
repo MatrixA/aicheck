@@ -19,7 +19,7 @@
 
 AICheck responde estas preguntas analizando los metadatos de archivos y marcas de agua invisibles. Sin API keys, sin red, sin configuración.
 
-**10 métodos de detección** · **51 herramientas de IA** · **16 formatos de archivo** · **3 niveles de confianza** · **Cero peticiones de red**
+**10 métodos de detección** · **61 herramientas de IA** · **16 formatos de archivo** · **3 niveles de confianza** · **Cero peticiones de red**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **Metadatos XMP/IPTC (confianza MEDIUM)** — Metadatos fotográficos estándar: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Fiables pero sin firma — pueden ser falsificados o eliminados.
 
-**Metadatos de contenedor MP4 (confianza MEDIUM)** — Analiza átomos estilo iTunes (`©too`, `©swr`), etiquetas AIGC (estándar chino con JSON `ProduceID`) y marcadores de marca de agua SEI H.264 (ej. Kling). Captura señales de IA integradas en contenedores de video que otros métodos no detectan.
+**Metadatos de contenedor MP4 (confianza MEDIUM)** — Analiza átomos estilo iTunes (`©too`, `©swr`), etiquetas AIGC (estándar chino con JSON `ProduceID`) y marcadores de marca de agua SEI H.264 (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). También detecta software de creación no-IA (FFmpeg, Remotion, Premiere, etc.) para visualización informativa. Captura señales de IA integradas en contenedores de video que otros métodos no detectan.
 
 **Metadatos de audio ID3 (confianza MEDIUM)** — Lee etiquetas ID3v2 de archivos MP3: marcos de comentario (COMM), marcos de URL (WOAS/WOAF/WXXX) y marcos de texto (TENC/TPUB/TXXX). Detecta plataformas de audio IA como Suno (mediante URLs incrustadas y comentarios "made with suno").
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **Análisis espectral de audio (confianza LOW)** — Análisis basado en FFT de audio WAV: detecta cortes de frecuencia abruptos (energía concentrada por debajo de Nyquist) y planitud espectral anormal típica de síntesis TTS/IA. Se ejecuta como respaldo o con `--deep`.
 
-**Marcas de agua invisibles (confianza LOW)** — Análisis DWT-DCT a nivel de píxel que detecta asimetría de ruido entre canales, concordancia de bits entre canales y patrones de energía wavelet. Se ejecuta automáticamente como respaldo cuando no se encuentran señales de metadatos, o bajo demanda con `--deep`.
+**Marcas de agua invisibles (confianza LOW)** — Análisis DWT-DCT a nivel de píxel que detecta asimetría de ruido entre canales, concordancia de bits entre canales y patrones de energía wavelet. Para videos, extrae automáticamente fotogramas clave mediante `ffmpeg` y los analiza individualmente. Se ejecuta automáticamente como respaldo cuando no se encuentran señales de metadatos, o bajo demanda con `--deep`.
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | Categoría | Herramientas |
 |-----------|-------------|
-| Generación de imágenes | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| Generación de video | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| Generación de audio/música | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| Generación de imágenes | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| Generación de video | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| Generación de audio/música | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | Plataformas | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Interfaces | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | Investigación | Glide, Parti, Muse, Seedream, Recraft |

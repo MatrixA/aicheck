@@ -8,7 +8,18 @@ use crate::known_tools;
 const MP4_TOOL_MAPPINGS: &[(&str, &str, Confidence)] =
     &[("google", "google veo", Confidence::Medium)];
 
-const SEI_MARKERS: &[(&[u8], &str)] = &[(b"kling-ai", "kling")];
+const SEI_MARKERS: &[(&[u8], &str)] = &[
+    (b"kling-ai", "kling"),
+    (b"sora", "sora"),
+    (b"runway", "runway"),
+    (b"pika-labs", "pika"),
+    (b"luma-ai", "luma"),
+    (b"hailuo", "hailuo"),
+    (b"pixverse", "pixverse"),
+    (b"vidu-ai", "vidu"),
+    (b"genmo", "genmo"),
+    (b"haiper", "haiper"),
+];
 
 fn read_u32_be(data: &[u8], offset: usize) -> Option<u32> {
     if offset + 4 > data.len() {
@@ -322,6 +333,62 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     signals.extend(detect_aigc_label(&entries));
     signals.extend(detect_sei_markers(&data));
     Ok(signals)
+}
+
+/// Known non-AI creation software patterns for informational reporting.
+const SOFTWARE_PATTERNS: &[(&str, &str)] = &[
+    ("remotion", "Remotion"),
+    ("lavf", "FFmpeg"),
+    ("lavc", "FFmpeg"),
+    ("ffmpeg", "FFmpeg"),
+    ("premiere", "Adobe Premiere Pro"),
+    ("after effects", "Adobe After Effects"),
+    ("davinci resolve", "DaVinci Resolve"),
+    ("final cut", "Final Cut Pro"),
+    ("imovie", "iMovie"),
+    ("handbrake", "HandBrake"),
+    ("obs", "OBS Studio"),
+    ("kdenlive", "Kdenlive"),
+    ("shotcut", "Shotcut"),
+    ("blender", "Blender"),
+    ("capcut", "CapCut"),
+    ("剪映", "CapCut"),
+];
+
+/// Detect creation software from MP4 metadata (informational, not AI-related).
+pub fn detect_software(path: &Path) -> Result<Vec<(String, String)>> {
+    let data = fs::read(path)?;
+    if get_box(&data, 0, data.len().min(64), b"ftyp").is_none() {
+        return Ok(vec![]);
+    }
+    let entries = extract_ilst_entries(&data);
+    let mut result = Vec::new();
+
+    let info_keys: &[&str] = &["\u{a9}too", "\u{a9}swr", "\u{a9}cmt"];
+    for (key, value) in &entries {
+        let is_info_key = info_keys.iter().any(|k| key.eq_ignore_ascii_case(k));
+        if !is_info_key || value.is_empty() {
+            continue;
+        }
+        let lower = value.to_lowercase();
+        // Skip if it matches an AI tool (those are handled by detect())
+        if crate::known_tools::match_ai_tool(value).is_some() {
+            continue;
+        }
+        for &(pattern, label) in SOFTWARE_PATTERNS {
+            if lower.contains(pattern) {
+                let label_str = match key.as_str() {
+                    "\u{a9}too" => "Encoder",
+                    "\u{a9}swr" => "Software",
+                    "\u{a9}cmt" => "Comment",
+                    _ => key.as_str(),
+                };
+                result.push((label_str.to_string(), format!("{} ({})", value, label)));
+                break;
+            }
+        }
+    }
+    Ok(result)
 }
 
 pub fn dump_info(path: &Path) -> Result<Vec<(String, String)>> {

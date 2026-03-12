@@ -13,6 +13,7 @@ confidence_high: "उच्च"
 
 # आउटपुट UI
 output_no_signals: "कोई AI-जनन संकेत नहीं पाया गया।"
+output_hint_check_original: "सुझाव: सोशल मीडिया और मैसेजिंग ऐप्स अपलोड करते समय अक्सर मेटाडेटा हटा देते हैं। सर्वोत्तम परिणामों के लिए मूल फ़ाइल का विश्लेषण करें।"
 output_summary: "परिणाम: %{detected}/%{total} फ़ाइलों में AI संकेत (%{high} उच्च, %{medium} मध्यम, %{low} कम)"
 output_type_label: "प्रकार: %{mime}"
 
@@ -64,3 +65,4 @@ signal_audio_cutoff: "%{freq}Hz पर आवृत्ति कटऑफ़ प
 signal_audio_flatness: "स्पेक्ट्रल समतलता %{value} सिंथेटिक ऑडियो का संकेत देती है (प्राकृतिक वाणी आमतौर पर > 0.05)"
 signal_wav_info_tool: "WAV INFO %{key} AI टूल से मेल खाता है: %{value}"
 signal_wav_tts_heuristic: "ऑडियो विशेषताएँ TTS का संकेत देती हैं: मोनो %{rate}Hz %{bits}bit"
+signal_video_frame_watermark: "वीडियो फ़्रेम वॉटरमार्क संकेतक पाए गए (%{frame} पर): %{indicators}"

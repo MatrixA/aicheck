@@ -182,6 +182,9 @@ pub struct FileReport {
     pub ai_generated: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    /// Detected creation software (informational, not AI-related).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub software_info: Vec<(String, String)>,
 }
 
 impl FileReport {
@@ -199,6 +202,7 @@ impl FileReport {
             overall_confidence,
             ai_generated,
             error: None,
+            software_info: Vec::new(),
         }
     }
 
@@ -211,6 +215,7 @@ impl FileReport {
             overall_confidence: Confidence::None,
             ai_generated: false,
             error: Some(error),
+            software_info: Vec::new(),
         }
     }
 }
@@ -320,16 +325,41 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
     }
 
     // Watermark detector — pixel-level analysis
+    let is_video = mime_type
+        .as_deref()
+        .map(|m| m.starts_with("video/"))
+        .unwrap_or(false);
+
     if deep || signals.is_empty() {
-        match watermark::detect(path) {
-            Ok(sigs) => signals.extend(sigs),
-            Err(e) => {
-                if std::env::var("AIC_DEBUG").is_ok() {
-                    eprintln!("  [debug] Watermark: {}", e);
+        if is_video {
+            // Video: extract frames and analyze
+            match watermark::detect_video(path) {
+                Ok(sigs) => signals.extend(sigs),
+                Err(e) => {
+                    if std::env::var("AIC_DEBUG").is_ok() {
+                        eprintln!("  [debug] Watermark (video): {}", e);
+                    }
+                }
+            }
+        } else {
+            // Image: direct pixel analysis
+            match watermark::detect(path) {
+                Ok(sigs) => signals.extend(sigs),
+                Err(e) => {
+                    if std::env::var("AIC_DEBUG").is_ok() {
+                        eprintln!("  [debug] Watermark: {}", e);
+                    }
                 }
             }
         }
     }
 
-    FileReport::from_signals(path.to_path_buf(), mime_type, signals)
+    let mut report = FileReport::from_signals(path.to_path_buf(), mime_type, signals);
+
+    // Collect informational software metadata
+    if let Ok(sw) = mp4_metadata::detect_software(path) {
+        report.software_info.extend(sw);
+    }
+
+    report
 }

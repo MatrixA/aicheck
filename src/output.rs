@@ -50,8 +50,14 @@ pub fn print_human(reports: &[FileReport]) {
             continue;
         }
 
+        // Show detected creation software (informational)
+        for (label, value) in &report.software_info {
+            println!("  {} {}: {}", "INFO  ".cyan(), label.dimmed(), value);
+        }
+
         if report.signals.is_empty() {
             println!("  {}", i18n::t("output_no_signals", &[]).dimmed());
+            println!("  {}", i18n::t("output_hint_check_original", &[]).dimmed());
             continue;
         }
 

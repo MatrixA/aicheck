@@ -19,7 +19,7 @@
 
 AICheck फ़ाइल मेटाडेटा और अदृश्य वॉटरमार्क का विश्लेषण करके इन सवालों का जवाब देता है। API कुंजी नहीं, नेटवर्क नहीं, सेटअप नहीं।
 
-**10 पहचान विधियाँ** · **51 AI उपकरण** · **16 फ़ाइल प्रारूप** · **3 विश्वसनीयता स्तर** · **शून्य नेटवर्क अनुरोध**
+**10 पहचान विधियाँ** · **61 AI उपकरण** · **16 फ़ाइल प्रारूप** · **3 विश्वसनीयता स्तर** · **शून्य नेटवर्क अनुरोध**
 
 ---
 
@@ -79,7 +79,7 @@ real_photo.jpg
 
 **XMP/IPTC मेटाडेटा (MEDIUM विश्वसनीयता)** — मानक फ़ोटो मेटाडेटा: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`। विश्वसनीय लेकिन बिना हस्ताक्षर — नकली बनाया या हटाया जा सकता है।
 
-**MP4 कंटेनर मेटाडेटा (MEDIUM विश्वसनीयता)** — iTunes-शैली के एटम (`©too`, `©swr`), AIGC लेबल (चीनी मानक, JSON `ProduceID` सहित), और H.264 SEI वॉटरमार्क मार्कर (जैसे Kling) का विश्लेषण करता है। वीडियो कंटेनरों में एम्बेडेड AI सिग्नल पकड़ता है जो अन्य विधियाँ चूक जाती हैं।
+**MP4 कंटेनर मेटाडेटा (MEDIUM विश्वसनीयता)** — iTunes-शैली के एटम (`©too`, `©swr`), AIGC लेबल (चीनी मानक, JSON `ProduceID` सहित), और H.264 SEI वॉटरमार्क मार्कर (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper) का विश्लेषण करता है। गैर-AI निर्माण सॉफ़्टवेयर (FFmpeg, Remotion, Premiere आदि) को भी सूचनात्मक प्रदर्शन के लिए पहचानता है। वीडियो कंटेनरों में एम्बेडेड AI सिग्नल पकड़ता है जो अन्य विधियाँ चूक जाती हैं।
 
 **ID3 ऑडियो मेटाडेटा (MEDIUM विश्वसनीयता)** — MP3 फ़ाइलों से ID3v2 टैग पढ़ता है: कमेंट फ़्रेम (COMM), URL फ़्रेम (WOAS/WOAF/WXXX), और टेक्स्ट फ़्रेम (TENC/TPUB/TXXX)। Suno जैसे AI ऑडियो प्लेटफ़ॉर्म का पता लगाता है (एम्बेडेड URL और "made with suno" कमेंट के माध्यम से)।
 
@@ -93,7 +93,7 @@ real_photo.jpg
 
 **ऑडियो स्पेक्ट्रल विश्लेषण (LOW विश्वसनीयता)** — WAV ऑडियो का FFT-आधारित विश्लेषण: हार्ड फ़्रीक्वेंसी कटऑफ़ (Nyquist से नीचे ऊर्जा केंद्रित) और TTS/AI संश्लेषण की विशिष्ट असामान्य स्पेक्ट्रल समतलता का पता लगाता है। फ़ॉलबैक के रूप में या `--deep` के साथ चलता है।
 
-**अदृश्य वॉटरमार्क (LOW विश्वसनीयता)** — पिक्सेल-स्तरीय DWT-DCT विश्लेषण जो चैनल नॉइज़ असमानता, क्रॉस-चैनल बिट सहमति, और वेवलेट ऊर्जा पैटर्न का पता लगाता है। जब कोई मेटाडेटा सिग्नल नहीं मिलता तो स्वचालित रूप से फ़ॉलबैक के रूप में चलता है, या `--deep` के साथ माँग पर चलता है।
+**अदृश्य वॉटरमार्क (LOW विश्वसनीयता)** — पिक्सेल-स्तरीय DWT-DCT विश्लेषण जो चैनल नॉइज़ असमानता, क्रॉस-चैनल बिट सहमति, और वेवलेट ऊर्जा पैटर्न का पता लगाता है। वीडियो के लिए, `ffmpeg` के माध्यम से स्वचालित रूप से कीफ़्रेम निकालकर व्यक्तिगत रूप से विश्लेषण करता है। जब कोई मेटाडेटा सिग्नल नहीं मिलता तो स्वचालित रूप से फ़ॉलबैक के रूप में चलता है, या `--deep` के साथ माँग पर चलता है।
 
 ---
 
@@ -103,10 +103,10 @@ real_photo.jpg
 
 | श्रेणी | उपकरण |
 |--------|--------|
-| इमेज जनरेशन | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI |
-| वीडियो जनरेशन | Sora, Google Veo, Runway, Pika, Kling, Vidu |
-| ऑडियो/म्यूज़िक जनरेशन | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful |
-| मल्टीमोडल | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image |
+| इमेज जनरेशन | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
+| वीडियो जनरेशन | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| ऑडियो/म्यूज़िक जनरेशन | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| मल्टीमोडल | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
 | प्लेटफ़ॉर्म | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | इंटरफ़ेस | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | रिसर्च | Glide, Parti, Muse, Seedream, Recraft |
