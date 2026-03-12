@@ -434,7 +434,7 @@ pub fn detect_video(path: &Path) -> Result<Vec<Signal>> {
                                     Confidence::Low,
                                     "signal_video_frame_watermark",
                                 )
-                                .param("frame", &format!("{:.1}s", timestamp))
+                                .param("frame", format!("{:.1}s", timestamp))
                                 .param(
                                     "indicators",
                                     if indicators.is_empty() {
