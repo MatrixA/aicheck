@@ -1,6 +1,6 @@
 [package]
 name = "aicheck"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.86"
 description = "Detect AI-generated content via provenance signals (C2PA, XMP/IPTC, EXIF)"
