@@ -64,6 +64,7 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
     "gemini",
     "jimeng",
     "即梦",
+    "dreamina",
     // New video generation tools
     "luma",
     "hailuo",
@@ -97,5 +98,6 @@ mod tests {
         assert_eq!(match_ai_tool("Canon EOS R5"), None);
         assert_eq!(match_ai_tool("ComfyUI v1.2"), Some("comfyui"));
         assert_eq!(match_ai_tool("Midjourney v6"), Some("midjourney"));
+        assert_eq!(match_ai_tool("Dreamina by ByteDance"), Some("dreamina"));
     }
 }

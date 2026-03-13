@@ -96,3 +96,47 @@ fn watermark_info_command() {
         .success()
         .stdout(predicate::str::contains("Watermark Analysis"));
 }
+
+#[test]
+fn visible_watermark_dreamina_detected_with_deep() {
+    cargo_bin_cmd!("aic")
+        .args([
+            "--lang",
+            "en",
+            "check",
+            "--deep",
+            "tests/fixtures/dreamina_visible_wm.jpg",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("MEDIUM"))
+        .stdout(predicate::str::contains("Visible AI watermark badge"));
+}
+
+#[test]
+fn visible_watermark_not_on_clean_image() {
+    cargo_bin_cmd!("aic")
+        .args([
+            "--lang",
+            "en",
+            "check",
+            "--deep",
+            "tests/fixtures/clean_synthetic.png",
+        ])
+        .assert()
+        .stdout(predicate::str::contains("Visible").not());
+}
+
+#[test]
+fn visible_watermark_not_on_invisible_watermarked() {
+    cargo_bin_cmd!("aic")
+        .args([
+            "--lang",
+            "en",
+            "check",
+            "--deep",
+            "tests/fixtures/watermarked_dwtdct.png",
+        ])
+        .assert()
+        .stdout(predicate::str::contains("Visible").not());
+}

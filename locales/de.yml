@@ -66,3 +66,5 @@ signal_audio_flatness: "Spektrale Flachheit %{value} deutet auf synthetisches Au
 signal_wav_info_tool: "WAV INFO %{key} stimmt mit KI-Tool überein: %{value}"
 signal_wav_tts_heuristic: "Audioeigenschaften deuten auf TTS hin: Mono %{rate}Hz %{bits}bit"
 signal_video_frame_watermark: "Wasserzeichen-Indikatoren in Videobild erkannt (bei %{frame}): %{indicators}"
+signal_visible_watermark_badge: "Sichtbares KI-Wasserzeichen-Badge in %{corner} Ecke erkannt (%{indicators})"
+signal_visible_watermark_generic: "Sichtbare Textüberlagerung in %{corner} Ecke erkannt (möglicherweise Wasserzeichen)"

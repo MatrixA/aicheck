@@ -15,6 +15,12 @@ const MIN_INDICATORS: usize = 2;
 const NOISE_ASYMMETRY_THRESHOLD: f64 = 0.08;
 const BIT_AGREEMENT_THRESHOLD: f64 = 0.62;
 
+// "Exceptionally strong" thresholds — when individual indicators far exceed their
+// base thresholds, we upgrade confidence even with only 2/3 indicators firing.
+const STRONG_BIT_AGREEMENT: f64 = 0.90;
+const STRONG_ENERGY_SPREAD: f64 = 1.0;
+const STRONG_NOISE_ASYMMETRY: f64 = 0.25;
+
 pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     let img = image::open(path).context("Failed to open image for watermark analysis")?;
     let img = if img.width() > MAX_DIM || img.height() > MAX_DIM {
@@ -33,6 +39,7 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     let debug = std::env::var("AIC_DEBUG").is_ok();
     let mut indicators: Vec<&str> = Vec::new();
     let mut details = Vec::new();
+    let mut has_exceptionally_strong = false;
 
     let channels = extract_rgb_channels(&rgba, w, h);
     let cw = w - (w % 2);
@@ -79,6 +86,9 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
         details.push(("noise_asymmetry".to_string(), format!("{:.3}", asymmetry)));
         if asymmetry > NOISE_ASYMMETRY_THRESHOLD {
             indicators.push("channel noise asymmetry");
+            if asymmetry > STRONG_NOISE_ASYMMETRY {
+                has_exceptionally_strong = true;
+            }
         }
     }
 
@@ -135,6 +145,9 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     if best_agreement > BIT_AGREEMENT_THRESHOLD {
         indicators.push("cross-channel bit consistency");
         details.push(("best_quant_step".to_string(), format!("{:.0}", best_q)));
+        if best_agreement > STRONG_BIT_AGREEMENT {
+            has_exceptionally_strong = true;
+        }
     }
 
     // Analysis 3: DWT residual energy ratio
@@ -174,23 +187,33 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
             }
             if ratio_spread > 0.25 {
                 indicators.push("asymmetric DWT energy distribution");
+                if ratio_spread > STRONG_ENERGY_SPREAD {
+                    has_exceptionally_strong = true;
+                }
             }
         }
     }
 
     // Emit signal
     if indicators.len() >= MIN_INDICATORS {
-        let strength_key = if indicators.len() >= 3 {
+        let strong = indicators.len() >= 3
+            || (indicators.len() >= 2 && has_exceptionally_strong);
+        let strength_key = if strong {
             "signal_watermark_strong"
         } else {
             "signal_watermark_moderate"
+        };
+        let confidence = if strong {
+            Confidence::Medium
+        } else {
+            Confidence::Low
         };
         let strength = i18n::t(strength_key, &[]);
         let indicators_str = indicators.join("; ");
 
         Ok(vec![SignalBuilder::new(
             SignalSource::Watermark,
-            Confidence::Low,
+            confidence,
             "signal_watermark_detected",
         )
         .param("strength", &strength)
@@ -418,10 +441,12 @@ pub fn detect_video(path: &Path) -> Result<Vec<Signal>> {
                         i, timestamp
                     );
                 }
+                // Invisible watermark analysis
                 match detect(&frame_path) {
                     Ok(signals) if !signals.is_empty() => {
                         // Re-wrap signals with video frame context
                         for signal in signals {
+                            let frame_confidence = signal.confidence;
                             let indicators = signal
                                 .details
                                 .iter()
@@ -431,7 +456,7 @@ pub fn detect_video(path: &Path) -> Result<Vec<Signal>> {
                             all_signals.push(
                                 SignalBuilder::new(
                                     SignalSource::Watermark,
-                                    Confidence::Low,
+                                    frame_confidence,
                                     "signal_video_frame_watermark",
                                 )
                                 .param("frame", format!("{:.1}s", timestamp))
@@ -454,6 +479,19 @@ pub fn detect_video(path: &Path) -> Result<Vec<Signal>> {
                     Err(e) => {
                         if debug {
                             eprintln!("  [debug] Watermark video frame {}: {}", i, e);
+                        }
+                    }
+                }
+
+                // Visible watermark analysis on the same frame
+                match super::visible_watermark::detect(&frame_path) {
+                    Ok(signals) if !signals.is_empty() => {
+                        all_signals.extend(signals);
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        if debug {
+                            eprintln!("  [debug] Visible watermark video frame {}: {}", i, e);
                         }
                     }
                 }

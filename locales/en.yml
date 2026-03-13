@@ -66,3 +66,5 @@ signal_audio_flatness: "Spectral flatness %{value} suggests synthetic audio (nat
 signal_wav_info_tool: "WAV INFO %{key} matches AI tool: %{value}"
 signal_wav_tts_heuristic: "Audio characteristics suggest TTS: mono %{rate}Hz %{bits}bit"
 signal_video_frame_watermark: "Video frame watermark indicators detected (at %{frame}): %{indicators}"
+signal_visible_watermark_badge: "Visible AI watermark badge detected in %{corner} corner (%{indicators})"
+signal_visible_watermark_generic: "Visible text overlay detected in %{corner} corner (possible watermark)"

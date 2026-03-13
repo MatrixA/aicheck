@@ -66,3 +66,5 @@ signal_audio_flatness: "स्पेक्ट्रल समतलता %{valu
 signal_wav_info_tool: "WAV INFO %{key} AI टूल से मेल खाता है: %{value}"
 signal_wav_tts_heuristic: "ऑडियो विशेषताएँ TTS का संकेत देती हैं: मोनो %{rate}Hz %{bits}bit"
 signal_video_frame_watermark: "वीडियो फ़्रेम वॉटरमार्क संकेतक पाए गए (%{frame} पर): %{indicators}"
+signal_visible_watermark_badge: "%{corner} कोने में दृश्य AI वॉटरमार्क बैज पाया गया (%{indicators})"
+signal_visible_watermark_generic: "%{corner} कोने में दृश्य टेक्स्ट ओवरले पाया गया (वॉटरमार्क हो सकता है)"
