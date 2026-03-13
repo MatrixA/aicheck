@@ -66,3 +66,5 @@ signal_audio_flatness: "Planitud espectral %{value} sugiere audio sintético (el
 signal_wav_info_tool: "WAV INFO %{key} coincide con herramienta de IA: %{value}"
 signal_wav_tts_heuristic: "Características de audio sugieren TTS: mono %{rate}Hz %{bits}bit"
 signal_video_frame_watermark: "Indicadores de marca de agua detectados en fotograma de video (en %{frame}): %{indicators}"
+signal_visible_watermark_badge: "Insignia de marca de agua de IA visible detectada en esquina %{corner} (%{indicators})"
+signal_visible_watermark_generic: "Superposición de texto visible detectada en esquina %{corner} (posible marca de agua)"

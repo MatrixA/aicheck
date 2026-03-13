@@ -5,6 +5,7 @@ pub mod filename;
 pub mod id3_metadata;
 pub mod mp4_metadata;
 pub mod png_text;
+pub mod visible_watermark;
 pub mod watermark;
 pub mod wav_metadata;
 pub mod xmp;
@@ -348,6 +349,15 @@ pub fn run_all_detectors(path: &Path, deep: bool) -> FileReport {
                 Err(e) => {
                     if std::env::var("AIC_DEBUG").is_ok() {
                         eprintln!("  [debug] Watermark: {}", e);
+                    }
+                }
+            }
+            // Visible watermark detection (corner badge analysis)
+            match visible_watermark::detect(path) {
+                Ok(sigs) => signals.extend(sigs),
+                Err(e) => {
+                    if std::env::var("AIC_DEBUG").is_ok() {
+                        eprintln!("  [debug] Visible watermark: {}", e);
                     }
                 }
             }
