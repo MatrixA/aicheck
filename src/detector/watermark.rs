@@ -196,8 +196,7 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
 
     // Emit signal
     if indicators.len() >= MIN_INDICATORS {
-        let strong = indicators.len() >= 3
-            || (indicators.len() >= 2 && has_exceptionally_strong);
+        let strong = indicators.len() >= 3 || (indicators.len() >= 2 && has_exceptionally_strong);
         let strength_key = if strong {
             "signal_watermark_strong"
         } else {

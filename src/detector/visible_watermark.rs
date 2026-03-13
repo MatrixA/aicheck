@@ -295,14 +295,14 @@ fn find_text_rows(region: &[u8], rw: u32, rh: u32, bright_threshold: u8) -> Vec<
             if region[(y * rw + x) as usize] >= bright_threshold {
                 run_len += 1;
             } else {
-                if run_len >= MIN_RUN_LENGTH && run_len <= MAX_RUN_LENGTH {
+                if (MIN_RUN_LENGTH..=MAX_RUN_LENGTH).contains(&run_len) {
                     runs_in_row += 1;
                 }
                 run_len = 0;
             }
         }
         // Check final run
-        if run_len >= MIN_RUN_LENGTH && run_len <= MAX_RUN_LENGTH {
+        if (MIN_RUN_LENGTH..=MAX_RUN_LENGTH).contains(&run_len) {
             runs_in_row += 1;
         }
         text_rows.push(runs_in_row >= MIN_RUNS_PER_ROW);
@@ -438,13 +438,13 @@ fn analyze_text_cluster(
             if region[(y * rw + x) as usize] >= bright_threshold {
                 run_len += 1;
             } else {
-                if run_len >= MIN_RUN_LENGTH && run_len <= MAX_RUN_LENGTH {
+                if (MIN_RUN_LENGTH..=MAX_RUN_LENGTH).contains(&run_len) {
                     runs += 1;
                 }
                 run_len = 0;
             }
         }
-        if run_len >= MIN_RUN_LENGTH && run_len <= MAX_RUN_LENGTH {
+        if (MIN_RUN_LENGTH..=MAX_RUN_LENGTH).contains(&run_len) {
             runs += 1;
         }
         if runs >= MIN_RUNS_PER_ROW {
