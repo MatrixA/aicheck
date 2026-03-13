@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-13
+
 ### Added
 
 - 10 new AI tool recognitions: Grok, Gemini, Jimeng (即梦), Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Hume, Fish Audio (51 → 61 tools)
