@@ -1,4 +1,4 @@
-> [English](../README.md) | [简体中文](README.zh-CN.md) | [Deutsch](README.de.md) | **日本語** | [한국어](README.ko.md) | [हिन्दी](README.hi.md) | [Español](README.es.md)
+> [English](README.en.md) | [简体中文](../README.md) | [Deutsch](README.de.md) | **日本語** | [한국어](README.ko.md) | [हिन्दी](README.hi.md) | [Español](README.es.md)
 
 <div align="center">
 
@@ -8,7 +8,7 @@
 
 [![CI](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml/badge.svg)](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/aicheck)](https://crates.io/crates/aicheck)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](../LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.86%2B-orange.svg)](https://www.rust-lang.org/)
 
 </div>
@@ -175,4 +175,4 @@ aic info photo.jpg
 
 ## 📄 ライセンス
 
-[AGPL-3.0](LICENSE)
+[AGPL-3.0](../LICENSE)
