@@ -1,4 +1,4 @@
-> [English](../README.md) | **简体中文** | [Deutsch](README.de.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [हिन्दी](README.hi.md) | [Español](README.es.md)
+> [English](README.en.md) | **简体中文** | [Deutsch](README.de.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [हिन्दी](README.hi.md) | [Español](README.es.md)
 
 <div align="center">
 
@@ -8,7 +8,7 @@
 
 [![CI](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml/badge.svg)](https://github.com/MatrixA/aicheck/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/aicheck)](https://crates.io/crates/aicheck)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](../LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.86%2B-orange.svg)](https://www.rust-lang.org/)
 
 </div>
@@ -20,6 +20,8 @@
 AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需要 API key，不需要联网，不需要配置。
 
 **10 种检测方法** · **61 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
+
+[![演示视频（Bilibili）](https://img.youtube.com/vi/1u-6TkHtWiA/maxresdefault.jpg)](https://www.bilibili.com/video/BV16Mc6zAE1s)
 
 ---
 
@@ -175,4 +177,4 @@ aic info photo.jpg
 
 ## 📄 许可证
 
-[AGPL-3.0](LICENSE)
+[AGPL-3.0](../LICENSE)
