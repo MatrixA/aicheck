@@ -21,7 +21,9 @@ AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需
 
 **10 种检测方法** · **61 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
 
-[![演示视频（Bilibili）](https://img.youtube.com/vi/1u-6TkHtWiA/maxresdefault.jpg)](https://www.bilibili.com/video/BV16Mc6zAE1s)
+![演示](demo-zh.gif)
+
+> 完整视频：[YouTube](https://youtu.be/1u-6TkHtWiA) | [Bilibili](https://www.bilibili.com/video/BV16Mc6zAE1s)
 
 ---
 

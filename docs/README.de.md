@@ -21,6 +21,10 @@ AICheck beantwortet diese Fragen durch Analyse von Datei-Metadaten und unsichtba
 
 **10 Erkennungsmethoden** · **61 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
 
+![Demo](demo-en.gif)
+
+> Vollständiges Video: [YouTube](https://youtu.be/1u-6TkHtWiA) | [Bilibili](https://www.bilibili.com/video/BV16Mc6zAE1s)
+
 ---
 
 ## ⚡ Schnellstart
