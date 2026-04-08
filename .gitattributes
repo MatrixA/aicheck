@@ -1,1 +1,5 @@
 tests/fixtures/*.mp4 filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/*.wav filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/*.png filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/*.jpg filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/*.jpeg filter=lfs diff=lfs merge=lfs -text
