@@ -25,6 +25,7 @@ const XMP_AI_PROPERTIES: &[&str] = &[
     "AISystemVersionUsed",
     "AIPromptInformation",
     "CreatorTool",
+    "Credit",
 ];
 
 /// Extract raw XMP XML from a file's bytes.
@@ -166,6 +167,19 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
                 .tool(tool_name)
                 .detail("CreatorTool", &value)
                 .build(),
+            );
+        }
+    }
+
+    // Check Credit field (e.g. photoshop:Credit="Made with Google AI")
+    if let Some(value) = extract_property(&xml, "Credit") {
+        if let Some(tool_name) = known_tools::match_ai_tool(&value) {
+            signals.push(
+                SignalBuilder::new(SignalSource::Xmp, Confidence::Medium, "signal_xmp_credit")
+                    .param("value", &value)
+                    .tool(tool_name)
+                    .detail("Credit", &value)
+                    .build(),
             );
         }
     }

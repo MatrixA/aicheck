@@ -62,10 +62,14 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
     // New image generation tools
     "grok",
     "gemini",
+    "google ai",
     "jimeng",
     "即梦",
     "dreamina",
+    "qwen",
+    "通义万相",
     // New video generation tools
+    "wan",
     "luma",
     "hailuo",
     "海螺",
@@ -99,5 +103,8 @@ mod tests {
         assert_eq!(match_ai_tool("ComfyUI v1.2"), Some("comfyui"));
         assert_eq!(match_ai_tool("Midjourney v6"), Some("midjourney"));
         assert_eq!(match_ai_tool("Dreamina by ByteDance"), Some("dreamina"));
+        assert_eq!(match_ai_tool("Made with Google AI"), Some("google ai"));
+        assert_eq!(match_ai_tool("Wan 2.6"), Some("wan"));
+        assert_eq!(match_ai_tool("Qwen VL Image"), Some("qwen"));
     }
 }
