@@ -19,7 +19,7 @@
 
 AICheck answers these questions by analyzing file metadata and invisible watermarks. No API keys, no network, no setup.
 
-**10 detection methods** · **61 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
+**10 detection methods** · **76 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
 
 ![Demo](demo-en.gif)
 
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### Detection Methods
 
-**C2PA Manifests (HIGH confidence)** — Cryptographically signed provenance. If a C2PA manifest says "made by DALL-E," that's the most authoritative signal metadata can provide. Reads `digitalSourceType` and `claim_generator`. Works on images, videos, and audio (e.g. ElevenLabs).
+**C2PA Manifests (HIGH confidence)** — Cryptographically signed provenance. If a C2PA manifest says "made by DALL-E," that's the most authoritative signal metadata can provide. Reads `digitalSourceType`, `claim_generator`, and `claim_generator_info`. Can infer specific AI tools from vendor identifiers in the claim generator (e.g. Google → Google AI). Works on images, videos, and audio (e.g. ElevenLabs).
 
-**XMP/IPTC Metadata (MEDIUM confidence)** — Standard photo metadata: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Reliable but unsigned — can be faked or stripped.
+**XMP/IPTC Metadata (MEDIUM confidence)** — Standard photo metadata: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`, `Credit` (e.g. Google AI's `photoshop:Credit`). Reliable but unsigned — can be faked or stripped.
 
-**MP4 Container Metadata (MEDIUM confidence)** — Parses iTunes-style atoms (`©too`, `©swr`), AIGC labels (China standard with JSON `ProduceID`), and H.264 SEI watermark markers (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). Also detects non-AI creation software (FFmpeg, Remotion, Premiere, etc.) for informational display. Catches AI signals baked into video containers that other methods miss.
+**MP4 Container Metadata (MEDIUM confidence)** — Parses iTunes-style atoms (`©too`, `©swr`), AIGC labels (China standard with JSON `ProduceID` and `ContentProducer` enterprise ID → tool mapping, e.g. Wan videos), and H.264 SEI watermark markers (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). Also detects non-AI creation software (FFmpeg, Remotion, Premiere, etc.) for informational display. Catches AI signals baked into video containers that other methods miss.
 
 **ID3 Audio Metadata (MEDIUM confidence)** — Reads ID3v2 tags from MP3 files: comment frames (COMM), URL frames (WOAS/WOAF/WXXX), and text frames (TENC/TPUB/TXXX). Detects AI audio platforms like Suno (via embedded URLs and "made with suno" comments).
 
 **WAV Container Metadata (MEDIUM/LOW confidence)** — Parses RIFF LIST/INFO chunks (ISFT, ICMT, IART) for AI tool references. Also flags TTS-typical audio characteristics: mono channel + non-standard sample rates (16kHz, 22050Hz, 24000Hz).
 
-**EXIF Heuristics (LOW confidence)** — If the `Software` tag matches a known AI tool AND typical camera fields (Make, Model, GPS, focal length) are absent, it's likely AI-generated. Also detects hash-like Artist tags.
+**EXIF Heuristics (LOW–MEDIUM confidence)** — If the `Software` tag matches a known AI tool AND typical camera fields (Make, Model, GPS, focal length) are absent, it's likely AI-generated. Also detects hash-like Artist tags. Additionally, parses AIGC JSON labels embedded in `UserComment` (e.g. Qianfan Qwen images), mapping `ContentProducer` enterprise IDs to specific tools (MEDIUM confidence).
 
 **PNG Text Chunks (LOW confidence)** — Scans `tEXt` and `iTXt` chunks for AI tool references in Software, Comment, Description, Source, Author, parameters, and prompt keywords.
 
@@ -107,10 +107,10 @@ real_photo.jpg
 
 | Category | Tools |
 |----------|-------|
-| Image generation | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| Video generation | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| Image generation | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| Video generation | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
 | Audio/Music generation | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | Platforms | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Interfaces | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | Research | Glide, Parti, Muse, Seedream, Recraft |
