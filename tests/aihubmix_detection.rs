@@ -415,12 +415,7 @@ fn flux_1_1_pro_detected_via_watermark() {
 #[test]
 fn sora_2_detected_via_c2pa() {
     cargo_bin_cmd!("aic")
-        .args([
-            "--lang",
-            "en",
-            "check",
-            "tests/fixtures/video_sora-2.mp4",
-        ])
+        .args(["--lang", "en", "check", "tests/fixtures/video_sora-2.mp4"])
         .assert()
         .success()
         .stdout(predicate::str::contains("C2PA"))
@@ -447,12 +442,7 @@ fn sora_2_pro_detected() {
 #[test]
 fn veo_3_detected_via_mp4_metadata() {
     cargo_bin_cmd!("aic")
-        .args([
-            "--lang",
-            "en",
-            "check",
-            "tests/fixtures/video_veo-3.mp4",
-        ])
+        .args(["--lang", "en", "check", "tests/fixtures/video_veo-3.mp4"])
         .assert()
         .success()
         .stdout(predicate::str::contains("google veo"));
@@ -475,12 +465,7 @@ fn veo_2_detected_via_mp4_metadata() {
 #[test]
 fn veo_3_1_detected_via_mp4_metadata() {
     cargo_bin_cmd!("aic")
-        .args([
-            "--lang",
-            "en",
-            "check",
-            "tests/fixtures/video_veo3.1.mp4",
-        ])
+        .args(["--lang", "en", "check", "tests/fixtures/video_veo3.1.mp4"])
         .assert()
         .success()
         .stdout(predicate::str::contains("google veo"));
@@ -661,15 +646,12 @@ fn gpt_4o_audio_preview_detected_via_wav_heuristic() {
 #[test]
 fn openai_tts_1_not_detected() {
     cargo_bin_cmd!("aic")
-        .args([
-            "--lang",
-            "en",
-            "check",
-            "tests/fixtures/audio_tts-1.mp3",
-        ])
+        .args(["--lang", "en", "check", "tests/fixtures/audio_tts-1.mp3"])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains("No AI-generation signals detected"));
+        .stdout(predicate::str::contains(
+            "No AI-generation signals detected",
+        ));
 }
 
 #[test]
@@ -683,7 +665,9 @@ fn openai_gpt_4o_mini_tts_not_detected() {
         ])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains("No AI-generation signals detected"));
+        .stdout(predicate::str::contains(
+            "No AI-generation signals detected",
+        ));
 }
 
 // =============================================================================
