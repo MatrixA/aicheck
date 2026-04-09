@@ -1,11 +1,15 @@
 use anyhow::Result;
-use exif::{In, Reader, Tag};
+use exif::{In, Reader, Tag, Value};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
 use super::{Confidence, Signal, SignalBuilder, SignalSource};
 use crate::known_tools;
+
+/// AIGC ContentProducer ID prefixes mapped to tool names (from EXIF UserComment).
+/// These are empirically observed enterprise registration numbers.
+const EXIF_AIGC_PRODUCER_PREFIXES: &[(&str, &str)] = &[("001191110000802100433B", "qwen")];
 
 /// Camera-specific EXIF tags that real photos typically have.
 const CAMERA_TAGS: &[Tag] = &[
@@ -72,7 +76,9 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     // Check ImageDescription / UserComment for AI references
     for tag in &[Tag::ImageDescription, Tag::UserComment] {
         if let Some(field) = exif.get_field(*tag, In::PRIMARY) {
-            let val = field.display_value().to_string().replace('"', "");
+            // For UserComment, the display_value() may return hex; decode raw bytes instead.
+            let raw_val = decode_field_text(field);
+            let val = raw_val.replace('"', "");
             if let Some(tool_name) = known_tools::match_ai_tool(&val) {
                 signals.push(
                     SignalBuilder::new(
@@ -82,6 +88,28 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
                     )
                     .param("tag", tag.to_string())
                     .tool(tool_name)
+                    .detail(tag.to_string(), &val)
+                    .build(),
+                );
+                software_matched = true;
+            } else if raw_val.contains("\"AIGC\"")
+                && (raw_val.contains("\"Label\":\"1\"") || raw_val.contains("\"Label\": \"1\""))
+            {
+                // AIGC JSON label in EXIF (e.g. Qwen images embed AIGC metadata in UserComment)
+                let tool = extract_json_field(&raw_val, "ContentProducer").and_then(|cp| {
+                    EXIF_AIGC_PRODUCER_PREFIXES
+                        .iter()
+                        .find(|(prefix, _)| cp.starts_with(prefix))
+                        .map(|(_, tool)| tool.to_string())
+                });
+                signals.push(
+                    SignalBuilder::new(
+                        SignalSource::Exif,
+                        Confidence::Medium,
+                        "signal_exif_aigc_label",
+                    )
+                    .param("tag", tag.to_string())
+                    .tool_opt(tool)
                     .detail(tag.to_string(), &val)
                     .build(),
                 );
@@ -127,6 +155,33 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
     }
 
     Ok(signals)
+}
+
+/// Decode an EXIF field to text. For UserComment (Undefined type),
+/// the first 8 bytes are a character code identifier; skip them and
+/// decode the remainder as UTF-8.
+fn decode_field_text(field: &exif::Field) -> String {
+    if let Value::Undefined(ref bytes, _) = field.value {
+        if bytes.len() > 8 {
+            // Skip 8-byte character code prefix (e.g. "ASCII\0\0\0")
+            if let Ok(text) = std::str::from_utf8(&bytes[8..]) {
+                return text.trim_end_matches('\0').to_string();
+            }
+        }
+    }
+    field.display_value().to_string()
+}
+
+fn extract_json_field(json: &str, field: &str) -> Option<String> {
+    let pattern = format!("\"{}\"", field);
+    let idx = json.find(&pattern)?;
+    let after = &json[idx + pattern.len()..];
+    let after = after.trim_start();
+    let after = after.strip_prefix(':')?;
+    let after = after.trim_start();
+    let after = after.strip_prefix('"')?;
+    let end = after.find('"')?;
+    Some(after[..end].to_string())
 }
 
 /// Dump all EXIF fields for the `info` subcommand.

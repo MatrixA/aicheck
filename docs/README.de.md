@@ -19,7 +19,7 @@
 
 AICheck beantwortet diese Fragen durch Analyse von Datei-Metadaten und unsichtbaren Wasserzeichen. Keine API-Keys, kein Netzwerk, keine Einrichtung.
 
-**10 Erkennungsmethoden** · **61 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
+**10 Erkennungsmethoden** · **76 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
 
 ![Demo](demo-en.gif)
 

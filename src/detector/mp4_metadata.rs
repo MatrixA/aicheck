@@ -8,6 +8,11 @@ use crate::known_tools;
 const MP4_TOOL_MAPPINGS: &[(&str, &str, Confidence)] =
     &[("google", "google veo", Confidence::Medium)];
 
+/// AIGC ContentProducer IDs mapped to tool names.
+/// These are empirically observed enterprise registration numbers,
+/// not officially published by the vendors.
+const AIGC_PRODUCER_MAPPINGS: &[(&str, &str)] = &[("001191330106MA2CFLDG4R10001", "wan")];
+
 const SEI_MARKERS: &[(&[u8], &str)] = &[
     (b"kling-ai", "kling"),
     (b"sora", "sora"),
@@ -259,6 +264,13 @@ fn detect_aigc_label(entries: &[(String, String)]) -> Vec<Signal> {
             continue;
         }
         let produce_id = extract_json_field(value, "ProduceID");
+        let content_producer = extract_json_field(value, "ContentProducer");
+        let tool = content_producer.as_deref().and_then(|cp| {
+            AIGC_PRODUCER_MAPPINGS
+                .iter()
+                .find(|(id, _)| cp == *id)
+                .map(|(_, tool)| tool.to_string())
+        });
         let signal = if let Some(ref pid) = produce_id {
             SignalBuilder::new(
                 SignalSource::Mp4Metadata,
@@ -266,6 +278,7 @@ fn detect_aigc_label(entries: &[(String, String)]) -> Vec<Signal> {
                 "signal_mp4_aigc_label_id",
             )
             .param("id", pid.as_str())
+            .tool_opt(tool)
             .detail("AIGC", value.as_str())
             .detail("ProduceID", pid.as_str())
             .build()
@@ -275,6 +288,7 @@ fn detect_aigc_label(entries: &[(String, String)]) -> Vec<Signal> {
                 Confidence::Medium,
                 "signal_mp4_aigc_label",
             )
+            .tool_opt(tool)
             .detail("AIGC", value.as_str())
             .build()
         };
@@ -472,6 +486,18 @@ mod tests {
             signals[0].description.contains("test-123")
                 || signals[0].msg_params.iter().any(|(_, v)| v == "test-123")
         );
+    }
+
+    #[test]
+    fn test_detect_aigc_label_with_wan_producer() {
+        let entries = vec![(
+            "AIGC".to_string(),
+            r#"{"Label":"1","ContentProducer":"001191330106MA2CFLDG4R10001","ProduceID":"abc"}"#
+                .to_string(),
+        )];
+        let signals = detect_aigc_label(&entries);
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].tool, Some("wan".to_string()));
     }
 
     #[test]

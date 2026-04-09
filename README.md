@@ -19,7 +19,7 @@
 
 AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需要 API key，不需要联网，不需要配置。
 
-**10 种检测方法** · **61 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
+**10 种检测方法** · **76 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
 
 ![演示](docs/demo-zh.gif)
 
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### 检测方法
 
-**C2PA 清单（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这就是元数据能提供的最权威证据。读取 `digitalSourceType` 和 `claim_generator` 字段。支持图片、视频和音频（如 ElevenLabs）。
+**C2PA 清单（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这就是元数据能提供的最权威证据。读取 `digitalSourceType`、`claim_generator` 和 `claim_generator_info` 字段。能通过 `claim_generator` 中的厂商标识（如 Google）推断具体 AI 工具。支持图片、视频和音频（如 ElevenLabs）。
 
-**XMP/IPTC 元数据（MEDIUM 置信度）**— 标准照片元数据：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`。可靠但没有签名——可以伪造或删除。
+**XMP/IPTC 元数据（MEDIUM 置信度）**— 标准照片元数据：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`、`Credit`（如 Google AI 的 `photoshop:Credit`）。可靠但没有签名——可以伪造或删除。
 
-**MP4 容器元数据（MEDIUM 置信度）**— 解析 iTunes 风格原子（`©too`、`©swr`）、AIGC 标签（中国标准，含 JSON `ProduceID`）和 H.264 SEI 水印标记（Kling、Sora、Runway、Pika、Luma、Hailuo、Pixverse、Vidu、Genmo、Haiper）。同时检测非 AI 创作软件（FFmpeg、Remotion、Premiere 等）作为信息展示。能捕获嵌入视频容器中的 AI 信号。
+**MP4 容器元数据（MEDIUM 置信度）**— 解析 iTunes 风格原子（`©too`、`©swr`）、AIGC 标签（中国标准，含 JSON `ProduceID` 和 `ContentProducer` 企业 ID → 工具映射，如 Wan 视频）和 H.264 SEI 水印标记（Kling、Sora、Runway、Pika、Luma、Hailuo、Pixverse、Vidu、Genmo、Haiper）。同时检测非 AI 创作软件（FFmpeg、Remotion、Premiere 等）作为信息展示。能捕获嵌入视频容器中的 AI 信号。
 
 **ID3 音频元数据（MEDIUM 置信度）**— 读取 MP3 文件的 ID3v2 标签：注释帧（COMM）、URL 帧（WOAS/WOAF/WXXX）和文本帧（TENC/TPUB/TXXX）。可检测 Suno 等 AI 音频平台（通过嵌入的 URL 和「made with suno」注释）。
 
 **WAV 容器元数据（MEDIUM/LOW 置信度）**— 解析 RIFF LIST/INFO 块（ISFT、ICMT、IART）中的 AI 工具引用。同时标记 TTS 典型音频特征：单声道 + 非标准采样率（16kHz、22050Hz、24000Hz）。
 
-**EXIF 启发式（LOW 置信度）**— 如果 `Software` 标签匹配已知 AI 工具，且缺少典型的相机字段（Make、Model、GPS、焦距），那大概率是 AI 生成的。也能检测哈希式的 Artist 标签。
+**EXIF 启发式（LOW–MEDIUM 置信度）**— 如果 `Software` 标签匹配已知 AI 工具，且缺少典型的相机字段（Make、Model、GPS、焦距），那大概率是 AI 生成的。也能检测哈希式的 Artist 标签。此外，解析 `UserComment` 中嵌入的 AIGC JSON 标签（如千帆 Qwen 图片），通过 `ContentProducer` 企业 ID 前缀映射到具体工具（MEDIUM 置信度）。
 
 **PNG 文本块（LOW 置信度）**— 扫描 `tEXt` 和 `iTXt` 块中 Software、Comment、Description、Source、Author、parameters、prompt 等关键字里的 AI 工具引用。
 
@@ -107,10 +107,10 @@ real_photo.jpg
 
 | 类别 | 工具 |
 |------|------|
-| 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
+| 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
 | 音频/音乐生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | 平台 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 界面工具 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | 研究项目 | Glide, Parti, Muse, Seedream, Recraft |

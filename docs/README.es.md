@@ -19,7 +19,7 @@
 
 AICheck responde estas preguntas analizando los metadatos de archivos y marcas de agua invisibles. Sin API keys, sin red, sin configuración.
 
-**10 métodos de detección** · **61 herramientas de IA** · **16 formatos de archivo** · **3 niveles de confianza** · **Cero peticiones de red**
+**10 métodos de detección** · **76 herramientas de IA** · **16 formatos de archivo** · **3 niveles de confianza** · **Cero peticiones de red**
 
 ![Demo](demo-en.gif)
 

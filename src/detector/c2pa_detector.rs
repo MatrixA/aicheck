@@ -71,6 +71,20 @@ fn check_manifest(manifest: &c2pa::Manifest, signals: &mut Vec<Signal>) {
                 .detail("claim_generator", cg)
                 .build(),
             );
+        } else if cg.to_lowercase().contains("google") {
+            // Google C2PA manifests (e.g. "Google C2PA Core Generator Library")
+            // indicate AI-generated content from Google Imagen/Gemini.
+            signals.push(
+                SignalBuilder::new(
+                    SignalSource::C2pa,
+                    Confidence::Medium,
+                    "signal_c2pa_claim_generator",
+                )
+                .param("value", cg)
+                .tool("google ai")
+                .detail("claim_generator", cg)
+                .build(),
+            );
         }
     }
 
@@ -86,6 +100,17 @@ fn check_manifest(manifest: &c2pa::Manifest, signals: &mut Vec<Signal>) {
                         "signal_c2pa_claim_generator_info",
                     )
                     .tool(tool_name)
+                    .detail("claim_generator_info", &info_json)
+                    .build(),
+                );
+            } else if info_json.to_lowercase().contains("google") {
+                signals.push(
+                    SignalBuilder::new(
+                        SignalSource::C2pa,
+                        Confidence::Medium,
+                        "signal_c2pa_claim_generator_info",
+                    )
+                    .tool("google ai")
                     .detail("claim_generator_info", &info_json)
                     .build(),
                 );
