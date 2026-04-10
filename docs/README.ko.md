@@ -19,7 +19,7 @@
 
 AICheck는 파일 메타데이터와 보이지 않는 워터마크를 분석하여 이런 질문에 답합니다. API 키 불필요, 네트워크 불필요, 설정 불필요.
 
-**10가지 감지 방법** · **76개 AI 도구** · **16가지 파일 형식** · **3단계 신뢰도** · **네트워크 요청 제로**
+**11가지 감지 방법** · **62개 AI 도구** · **16가지 파일 형식** · **3단계 신뢰도** · **네트워크 요청 제로**
 
 ![데모](demo-en.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   메타데이터 신호 감지?                      신호 없음?
         |                                          |
         v                                          v
-   [ 판정 ]               [ 보이지 않는 워터마크 / 오디오 스펙트럼 분석 ]
-                            DWT-DCT 또는 FFT 분석
-                            신뢰도: LOW
+   [ 판정 ]      [ 비가시 / 가시 워터마크 / 오디오 스펙트럼 분석 ]
+                   DWT-DCT / 휘도 분석 / FFT 분석
+                   신뢰도: LOW–MEDIUM
                                        |
                                        v
                                     [ 판정 ]
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### 감지 방법
 
-**C2PA 매니페스트 (HIGH 신뢰도)** — 암호화 서명된 출처 증명. C2PA 매니페스트에 "DALL-E로 제작"이라고 되어 있다면, 이것이 메타데이터가 제공할 수 있는 가장 권위 있는 신호입니다. `digitalSourceType`과 `claim_generator`를 읽습니다. 이미지, 영상, 오디오(예: ElevenLabs)에 대응.
+**C2PA 매니페스트 (HIGH 신뢰도)** — 암호화 서명된 출처 증명. C2PA 매니페스트에 "DALL-E로 제작"이라고 되어 있다면, 이것이 메타데이터가 제공할 수 있는 가장 권위 있는 신호입니다. `digitalSourceType`, `claim_generator`, `claim_generator_info`를 읽습니다. 클레임 생성기 내 벤더 식별자에서 특정 AI 도구를 추론 가능(예: Google → Google AI). 이미지, 영상, 오디오(예: ElevenLabs)에 대응.
 
-**XMP/IPTC 메타데이터 (MEDIUM 신뢰도)** — 표준 사진 메타데이터: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. 신뢰할 수 있지만 서명되지 않음 — 위조하거나 제거할 수 있습니다.
+**XMP/IPTC 메타데이터 (MEDIUM 신뢰도)** — 표준 사진 메타데이터: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`, `Credit`(예: Google AI의 `photoshop:Credit`). 신뢰할 수 있지만 서명되지 않음 — 위조하거나 제거할 수 있습니다.
 
-**MP4 컨테이너 메타데이터 (MEDIUM 신뢰도)** — iTunes 스타일 아톰(`©too`, `©swr`), AIGC 라벨(중국 표준, JSON `ProduceID` 포함), H.264 SEI 워터마크 마커(Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper)를 분석합니다. 비AI 제작 소프트웨어(FFmpeg, Remotion, Premiere 등)도 정보 표시용으로 감지합니다. 다른 방법이 놓치는 비디오 컨테이너에 내장된 AI 신호를 감지합니다.
+**MP4 컨테이너 메타데이터 (MEDIUM 신뢰도)** — iTunes 스타일 아톰(`©too`, `©swr`), AIGC 라벨(중국 표준, JSON `ProduceID`와 `ContentProducer` 기업 ID → 도구 매핑 포함, 예: Wan 영상), H.264 SEI 워터마크 마커(Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper)를 분석합니다. 비AI 제작 소프트웨어(FFmpeg, Remotion, Premiere 등)도 정보 표시용으로 감지합니다. 다른 방법이 놓치는 비디오 컨테이너에 내장된 AI 신호를 감지합니다.
 
 **ID3 오디오 메타데이터 (MEDIUM 신뢰도)** — MP3 파일의 ID3v2 태그를 읽습니다: 코멘트 프레임(COMM), URL 프레임(WOAS/WOAF/WXXX), 텍스트 프레임(TENC/TPUB/TXXX). Suno 같은 AI 오디오 플랫폼을 감지합니다(내장 URL과 "made with suno" 코멘트를 통해).
 
 **WAV 컨테이너 메타데이터 (MEDIUM/LOW 신뢰도)** — RIFF LIST/INFO 청크(ISFT, ICMT, IART)에서 AI 도구 참조를 분석합니다. TTS 특유의 오디오 특성도 표시합니다: 모노 채널 + 비표준 샘플레이트(16kHz, 22050Hz, 24000Hz).
 
-**EXIF 휴리스틱 (LOW 신뢰도)** — `Software` 태그가 알려진 AI 도구와 일치하고 일반적인 카메라 필드(Make, Model, GPS, 초점 거리)가 없으면 AI 생성일 가능성이 높습니다. 해시 형태의 Artist 태그도 감지합니다.
+**EXIF 휴리스틱 (LOW–MEDIUM 신뢰도)** — `Software` 태그가 알려진 AI 도구와 일치하고 일반적인 카메라 필드(Make, Model, GPS, 초점 거리)가 없으면 AI 생성일 가능성이 높습니다. 해시 형태의 Artist 태그도 감지합니다. 또한 `UserComment`에 포함된 AIGC JSON 라벨(예: 천범 Qwen 이미지)을 파싱하여 `ContentProducer` 기업 ID 접두사를 특정 도구에 매핑합니다(MEDIUM 신뢰도).
 
 **PNG 텍스트 청크 (LOW 신뢰도)** — `tEXt`와 `iTXt` 청크에서 Software, Comment, Description, Source, Author, parameters, prompt 키워드의 AI 도구 참조를 스캔합니다.
 
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **보이지 않는 워터마크 (LOW 신뢰도)** — 픽셀 수준의 DWT-DCT 분석으로 채널 노이즈 비대칭, 채널 간 비트 일치, 웨이블릿 에너지 패턴을 감지합니다. 영상의 경우 `ffmpeg`를 통해 자동으로 키프레임을 추출하여 개별 분석합니다. 메타데이터 신호가 발견되지 않으면 자동으로 폴백 실행되거나, `--deep`으로 요청 시 실행됩니다.
 
+**가시 워터마크 (MEDIUM 신뢰도)** — 이미지 네 모서리의 가시적 텍스트 오버레이를 감지합니다(예: 중국 AI 생성 콘텐츠 표시 라벨). 휘도 분석과 텍스트 행 패턴 감지를 사용하여 모서리의 작은 텍스트 배지를 식별합니다. 비가시 워터마크 감지와 함께 실행되며, 이미지에만 적용됩니다.
+
 ---
 
 ## 🎯 인식 대상
@@ -107,10 +109,10 @@ real_photo.jpg
 
 | 카테고리 | 도구 |
 |---------|------|
-| 이미지 생성 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| 영상 생성 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
-| 오디오/음악 생성 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| 멀티모달 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| 이미지 생성 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| 영상 생성 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
+| 오디오/음악 생성 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
+| 멀티모달 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | 플랫폼 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 인터페이스 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | 연구 | Glide, Parti, Muse, Seedream, Recraft |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |------|------|
 | `--json` | JSON 형식으로 출력 |
 | `-q, --quiet` | 출력 억제, 종료 코드만 설정 |
-| `--deep` | 모든 파일에 보이지 않는 워터마크 및 오디오 스펙트럼 분석 강제 |
 | `--no-color` | 색상 출력 비활성화 |
+| `--lang <LANG>` | 표시 언어 변경 (en, zh-CN, de, ja, ko, hi, es) |
+
+### Check 옵션
+
+| 옵션 | 효과 |
+|------|------|
+| `-r, --recursive` | 디렉토리 재귀적 스캔 |
+| `--deep` | 모든 파일에 보이지 않는 워터마크 및 오디오 스펙트럼 분석 강제 |
+| `--min-confidence <LEVEL>` | 신뢰도로 필터 (low, medium, high; 기본값: low) |
 
 ### 종료 코드
 

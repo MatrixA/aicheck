@@ -291,6 +291,56 @@ fn nano_pro_json_output() {
         .stdout(predicate::str::contains("\"ai_generated\": true"));
 }
 
+// --- Adobe Firefly (C2PA + XMP, HIGH) ---
+
+#[test]
+fn firefly_detected_via_c2pa() {
+    cargo_bin_cmd!("aic")
+        .args(["--lang", "en", "check", "tests/fixtures/ai_firefly.png"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("C2PA"))
+        .stdout(predicate::str::contains("firefly"));
+}
+
+#[test]
+fn firefly_detected_via_xmp() {
+    cargo_bin_cmd!("aic")
+        .args(["--lang", "en", "check", "tests/fixtures/ai_firefly.png"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("XMP"))
+        .stdout(predicate::str::contains("trainedAlgorithmicMedia"));
+}
+
+#[test]
+fn firefly_json_output() {
+    cargo_bin_cmd!("aic")
+        .args([
+            "--lang",
+            "en",
+            "--json",
+            "check",
+            "tests/fixtures/ai_firefly.png",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"ai_generated\": true"))
+        .stdout(predicate::str::contains("\"confidence\": \"high\""));
+}
+
+#[test]
+fn firefly_info_shows_c2pa_and_xmp() {
+    cargo_bin_cmd!("aic")
+        .args(["--lang", "en", "info", "tests/fixtures/ai_firefly.png"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("C2PA"))
+        .stdout(predicate::str::contains("Adobe_Firefly"))
+        .stdout(predicate::str::contains("XMP"))
+        .stdout(predicate::str::contains("trainedAlgorithmicMedia"));
+}
+
 // --- Deep mode tests (slow, require pixel analysis) ---
 
 #[test]

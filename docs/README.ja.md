@@ -19,7 +19,7 @@
 
 AICheckはファイルのメタデータと不可視ウォーターマークを分析してこれらの疑問に答えます。APIキー不要、ネットワーク不要、セットアップ不要。
 
-**10種の検出方法** · **76種のAIツール** · **16種のファイル形式** · **3段階の信頼度** · **ネットワーク通信ゼロ**
+**11種の検出方法** · **62種のAIツール** · **16種のファイル形式** · **3段階の信頼度** · **ネットワーク通信ゼロ**
 
 ![デモ](demo-en.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   メタデータシグナル検出？                  シグナルなし？
         |                                          |
         v                                          v
-   [ 判定 ]                [ 不可視ウォーターマーク / 音声スペクトル分析 ]
-                             DWT-DCTまたはFFT分析
-                             信頼度: LOW
+   [ 判定 ]     [ 不可視 / 可視ウォーターマーク / 音声スペクトル分析 ]
+                  DWT-DCT / 輝度分析 / FFT分析
+                  信頼度: LOW–MEDIUM
                                        |
                                        v
                                     [ 判定 ]
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### 検出方法
 
-**C2PAマニフェスト（HIGH信頼度）**— 暗号署名による来歴証明。C2PAマニフェストに「DALL-Eで作成」と記載されていれば、それはメタデータが提供できる最も権威ある証拠です。`digitalSourceType`と`claim_generator`を読み取ります。画像、動画、音声（例：ElevenLabs）に対応。
+**C2PAマニフェスト（HIGH信頼度）**— 暗号署名による来歴証明。C2PAマニフェストに「DALL-Eで作成」と記載されていれば、それはメタデータが提供できる最も権威ある証拠です。`digitalSourceType`、`claim_generator`、`claim_generator_info`を読み取ります。クレームジェネレーター内のベンダー識別子から特定のAIツールを推測可能（例：Google → Google AI）。画像、動画、音声（例：ElevenLabs）に対応。
 
-**XMP/IPTCメタデータ（MEDIUM信頼度）**— 標準的な写真メタデータ：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`。信頼性は高いが署名なし——偽造や削除が可能。
+**XMP/IPTCメタデータ（MEDIUM信頼度）**— 標準的な写真メタデータ：`DigitalSourceType`、`AISystemUsed`、`AIPromptInformation`、`CreatorTool`、`Credit`（例：Google AIの`photoshop:Credit`）。信頼性は高いが署名なし——偽造や削除が可能。
 
-**MP4コンテナメタデータ（MEDIUM信頼度）**— iTunes形式のアトム（`©too`、`©swr`）、AIGCラベル（中国規格、JSON `ProduceID`付き）、H.264 SEIウォーターマークマーカー（Kling、Sora、Runway、Pika、Luma、Hailuo、Pixverse、Vidu、Genmo、Haiper）を解析。非AI制作ソフトウェア（FFmpeg、Remotion、Premiereなど）も情報表示として検出。他の方法では見逃されるビデオコンテナに埋め込まれたAIシグナルを検出。
+**MP4コンテナメタデータ（MEDIUM信頼度）**— iTunes形式のアトム（`©too`、`©swr`）、AIGCラベル（中国規格、JSON `ProduceID`と`ContentProducer`企業ID → ツールマッピング付き、例：Wan動画）、H.264 SEIウォーターマークマーカー（Kling、Sora、Runway、Pika、Luma、Hailuo、Pixverse、Vidu、Genmo、Haiper）を解析。非AI制作ソフトウェア（FFmpeg、Remotion、Premiereなど）も情報表示として検出。他の方法では見逃されるビデオコンテナに埋め込まれたAIシグナルを検出。
 
 **ID3音声メタデータ（MEDIUM信頼度）**— MP3ファイルのID3v2タグを読み取り：コメントフレーム（COMM）、URLフレーム（WOAS/WOAF/WXXX）、テキストフレーム（TENC/TPUB/TXXX）。SunoなどのAI音声プラットフォームを検出（埋め込みURLや「made with suno」コメント経由）。
 
 **WAVコンテナメタデータ（MEDIUM/LOW信頼度）**— RIFF LIST/INFOチャンク（ISFT、ICMT、IART）を解析してAIツールへの参照を検出。TTS特有の音声特性も検出：モノラル + 非標準サンプルレート（16kHz、22050Hz、24000Hz）。
 
-**EXIFヒューリスティクス（LOW信頼度）**— `Software`タグが既知のAIツールと一致し、かつ典型的なカメラフィールド（Make、Model、GPS、焦点距離）が欠落している場合、AI生成の可能性が高い。ハッシュ形式のArtistタグも検出。
+**EXIFヒューリスティクス（LOW–MEDIUM信頼度）**— `Software`タグが既知のAIツールと一致し、かつ典型的なカメラフィールド（Make、Model、GPS、焦点距離）が欠落している場合、AI生成の可能性が高い。ハッシュ形式のArtistタグも検出。さらに、`UserComment`に埋め込まれたAIGC JSONラベル（例：千帆Qwen画像）を解析し、`ContentProducer`企業IDプレフィックスを特定のツールにマッピング（MEDIUM信頼度）。
 
 **PNGテキストチャンク（LOW信頼度）**— `tEXt`および`iTXt`チャンクのSoftware、Comment、Description、Source、Author、parameters、promptキーワードからAIツールへの参照をスキャン。
 
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **不可視ウォーターマーク（LOW信頼度）**— ピクセルレベルのDWT-DCT分析で、チャンネルノイズの非対称性、チャンネル間ビット一致、ウェーブレットエネルギーパターンを検出。動画の場合は`ffmpeg`でキーフレームを自動抽出し、個別に分析。メタデータシグナルが見つからない場合に自動的にフォールバックとして実行、または`--deep`でオンデマンド実行。
 
+**可視ウォーターマーク（MEDIUM信頼度）**— 画像の四隅にある可視テキストオーバーレイを検出（例：中国のAI生成コンテンツ表示ラベル）。輝度分析とテキスト行パターン検出により、角の小さなテキストバッジを識別。不可視ウォーターマーク検出と同時に実行、画像のみ対応。
+
 ---
 
 ## 🎯 認識対象
@@ -107,10 +109,10 @@ real_photo.jpg
 
 | カテゴリ | ツール |
 |---------|--------|
-| 画像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| 動画生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
-| 音声/音楽生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| マルチモーダル | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| 画像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| 動画生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
+| 音声/音楽生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
+| マルチモーダル | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | プラットフォーム | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | インターフェース | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | 研究 | Glide, Parti, Muse, Seedream, Recraft |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |-----------|------|
 | `--json` | JSON形式で出力 |
 | `-q, --quiet` | 出力を抑制、終了コードのみ設定 |
-| `--deep` | すべてのファイルに不可視ウォーターマークと音声スペクトル分析を強制 |
 | `--no-color` | 色付き出力を無効化 |
+| `--lang <LANG>` | 表示言語を上書き（en, zh-CN, de, ja, ko, hi, es） |
+
+### Checkオプション
+
+| オプション | 効果 |
+|-----------|------|
+| `-r, --recursive` | ディレクトリを再帰的にスキャン |
+| `--deep` | すべてのファイルに不可視ウォーターマークと音声スペクトル分析を強制 |
+| `--min-confidence <LEVEL>` | 信頼度でフィルタ（low, medium, high; デフォルト: low） |
 
 ### 終了コード
 

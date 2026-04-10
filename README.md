@@ -19,7 +19,7 @@
 
 AICheck 通过分析文件元数据和隐形水印来回答这些问题。不需要 API key，不需要联网，不需要配置。
 
-**10 种检测方法** · **76 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
+**11 种检测方法** · **62 种 AI 工具** · **16 种文件格式** · **3 级置信度** · **完全离线运行**
 
 ![演示](docs/demo-zh.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   检测到元数据信号?                          没有信号?
         |                                          |
         v                                          v
-   [ 判定 ]                    [ 隐形水印 / 音频频谱分析 ]
-                                DWT-DCT 或 FFT 分析
-                                置信度: LOW
+   [ 判定 ]              [ 隐形水印 / 可见水印 / 音频频谱分析 ]
+                           DWT-DCT / 亮度分析 / FFT
+                           置信度: LOW–MEDIUM
                                        |
                                        v
                                   [ 判定 ]
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **隐形水印（LOW 置信度）**— 像素级 DWT-DCT 分析，检测通道噪声不对称性、跨通道比特一致性和小波能量模式。对于视频文件，自动通过 `ffmpeg` 提取关键帧并逐帧分析。当未检测到元数据信号时自动运行，也可通过 `--deep` 强制启用。
 
+**可见水印（MEDIUM 置信度）**— 检测图片四角区域的可见文字覆盖标记（如中国 AI 生成内容标注标签）。通过亮度分析和文字行模式检测来识别角落区域的小型文字水印。与隐形水印检测同时运行，仅对图片有效。
+
 ---
 
 ## 🎯 识别能力
@@ -109,7 +111,7 @@ real_photo.jpg
 |------|------|
 | 图像生成 | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
 | 视频生成 | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
-| 音频/音乐生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| 音频/音乐生成 | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
 | 多模态 | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | 平台 | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | 界面工具 | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |------|------|
 | `--json` | 以 JSON 格式输出 |
 | `-q, --quiet` | 不输出内容，仅设置退出码 |
-| `--deep` | 强制对所有文件进行隐形水印和音频频谱分析 |
 | `--no-color` | 禁用彩色输出 |
+| `--lang <LANG>` | 覆盖显示语言（en, zh-CN, de, ja, ko, hi, es） |
+
+### Check 选项
+
+| 选项 | 说明 |
+|------|------|
+| `-r, --recursive` | 递归扫描目录 |
+| `--deep` | 强制对所有文件进行隐形水印和音频频谱分析 |
+| `--min-confidence <LEVEL>` | 按置信度过滤（low, medium, high，默认 low） |
 
 ### 退出码
 
