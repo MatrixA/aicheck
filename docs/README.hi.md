@@ -19,7 +19,7 @@
 
 AICheck फ़ाइल मेटाडेटा और अदृश्य वॉटरमार्क का विश्लेषण करके इन सवालों का जवाब देता है। API कुंजी नहीं, नेटवर्क नहीं, सेटअप नहीं।
 
-**10 पहचान विधियाँ** · **76 AI उपकरण** · **16 फ़ाइल प्रारूप** · **3 विश्वसनीयता स्तर** · **शून्य नेटवर्क अनुरोध**
+**11 पहचान विधियाँ** · **62 AI उपकरण** · **16 फ़ाइल प्रारूप** · **3 विश्वसनीयता स्तर** · **शून्य नेटवर्क अनुरोध**
 
 ![डेमो](demo-en.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   मेटाडेटा सिग्नल मिले?                    कोई सिग्नल नहीं?
         |                                          |
         v                                          v
-   [ निर्णय ]              [ अदृश्य वॉटरमार्क / ऑडियो स्पेक्ट्रल विश्लेषण ]
-                             DWT-DCT या FFT विश्लेषण
-                             विश्वसनीयता: LOW
+   [ निर्णय ]     [ अदृश्य / दृश्य वॉटरमार्क / ऑडियो स्पेक्ट्रल विश्लेषण ]
+                    DWT-DCT / चमक विश्लेषण / FFT
+                    विश्वसनीयता: LOW–MEDIUM
                                        |
                                        v
                                    [ निर्णय ]
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### पहचान विधियाँ
 
-**C2PA मैनिफ़ेस्ट (HIGH विश्वसनीयता)** — क्रिप्टोग्राफ़िक रूप से हस्ताक्षरित उत्पत्ति प्रमाण। यदि C2PA मैनिफ़ेस्ट कहता है "DALL-E द्वारा बनाया गया", तो यह मेटाडेटा द्वारा दिया जा सकने वाला सबसे प्रामाणिक संकेत है। `digitalSourceType` और `claim_generator` पढ़ता है। इमेज, वीडियो और ऑडियो (जैसे ElevenLabs) पर काम करता है।
+**C2PA मैनिफ़ेस्ट (HIGH विश्वसनीयता)** — क्रिप्टोग्राफ़िक रूप से हस्ताक्षरित उत्पत्ति प्रमाण। यदि C2PA मैनिफ़ेस्ट कहता है "DALL-E द्वारा बनाया गया", तो यह मेटाडेटा द्वारा दिया जा सकने वाला सबसे प्रामाणिक संकेत है। `digitalSourceType`, `claim_generator` और `claim_generator_info` पढ़ता है। क्लेम जनरेटर में वेंडर पहचानकर्ताओं से विशिष्ट AI उपकरण का अनुमान लगा सकता है (जैसे Google → Google AI)। इमेज, वीडियो और ऑडियो (जैसे ElevenLabs) पर काम करता है।
 
-**XMP/IPTC मेटाडेटा (MEDIUM विश्वसनीयता)** — मानक फ़ोटो मेटाडेटा: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`। विश्वसनीय लेकिन बिना हस्ताक्षर — नकली बनाया या हटाया जा सकता है।
+**XMP/IPTC मेटाडेटा (MEDIUM विश्वसनीयता)** — मानक फ़ोटो मेटाडेटा: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`, `Credit` (जैसे Google AI का `photoshop:Credit`)। विश्वसनीय लेकिन बिना हस्ताक्षर — नकली बनाया या हटाया जा सकता है।
 
-**MP4 कंटेनर मेटाडेटा (MEDIUM विश्वसनीयता)** — iTunes-शैली के एटम (`©too`, `©swr`), AIGC लेबल (चीनी मानक, JSON `ProduceID` सहित), और H.264 SEI वॉटरमार्क मार्कर (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper) का विश्लेषण करता है। गैर-AI निर्माण सॉफ़्टवेयर (FFmpeg, Remotion, Premiere आदि) को भी सूचनात्मक प्रदर्शन के लिए पहचानता है। वीडियो कंटेनरों में एम्बेडेड AI सिग्नल पकड़ता है जो अन्य विधियाँ चूक जाती हैं।
+**MP4 कंटेनर मेटाडेटा (MEDIUM विश्वसनीयता)** — iTunes-शैली के एटम (`©too`, `©swr`), AIGC लेबल (चीनी मानक, JSON `ProduceID` और `ContentProducer` एंटरप्राइज़ ID → उपकरण मैपिंग सहित, जैसे Wan वीडियो), और H.264 SEI वॉटरमार्क मार्कर (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper) का विश्लेषण करता है। गैर-AI निर्माण सॉफ़्टवेयर (FFmpeg, Remotion, Premiere आदि) को भी सूचनात्मक प्रदर्शन के लिए पहचानता है। वीडियो कंटेनरों में एम्बेडेड AI सिग्नल पकड़ता है जो अन्य विधियाँ चूक जाती हैं।
 
 **ID3 ऑडियो मेटाडेटा (MEDIUM विश्वसनीयता)** — MP3 फ़ाइलों से ID3v2 टैग पढ़ता है: कमेंट फ़्रेम (COMM), URL फ़्रेम (WOAS/WOAF/WXXX), और टेक्स्ट फ़्रेम (TENC/TPUB/TXXX)। Suno जैसे AI ऑडियो प्लेटफ़ॉर्म का पता लगाता है (एम्बेडेड URL और "made with suno" कमेंट के माध्यम से)।
 
 **WAV कंटेनर मेटाडेटा (MEDIUM/LOW विश्वसनीयता)** — AI उपकरण संदर्भों के लिए RIFF LIST/INFO चंक (ISFT, ICMT, IART) का विश्लेषण करता है। TTS-विशिष्ट ऑडियो विशेषताओं को भी चिह्नित करता है: मोनो चैनल + गैर-मानक सैंपल दर (16kHz, 22050Hz, 24000Hz)।
 
-**EXIF ह्यूरिस्टिक्स (LOW विश्वसनीयता)** — यदि `Software` टैग किसी ज्ञात AI उपकरण से मेल खाता है और विशिष्ट कैमरा फ़ील्ड (Make, Model, GPS, फ़ोकल लंबाई) अनुपस्थित हैं, तो यह संभवतः AI-जनित है। हैश-जैसे Artist टैग का भी पता लगाता है।
+**EXIF ह्यूरिस्टिक्स (LOW–MEDIUM विश्वसनीयता)** — यदि `Software` टैग किसी ज्ञात AI उपकरण से मेल खाता है और विशिष्ट कैमरा फ़ील्ड (Make, Model, GPS, फ़ोकल लंबाई) अनुपस्थित हैं, तो यह संभवतः AI-जनित है। हैश-जैसे Artist टैग का भी पता लगाता है। इसके अतिरिक्त, `UserComment` में एम्बेडेड AIGC JSON लेबल (जैसे Qianfan Qwen इमेज) को पार्स करता है, `ContentProducer` एंटरप्राइज़ ID प्रीफ़िक्स को विशिष्ट उपकरणों में मैप करता है (MEDIUM विश्वसनीयता)।
 
 **PNG टेक्स्ट चंक (LOW विश्वसनीयता)** — Software, Comment, Description, Source, Author, parameters, और prompt कीवर्ड में AI उपकरण संदर्भों के लिए `tEXt` और `iTXt` चंक को स्कैन करता है।
 
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **अदृश्य वॉटरमार्क (LOW विश्वसनीयता)** — पिक्सेल-स्तरीय DWT-DCT विश्लेषण जो चैनल नॉइज़ असमानता, क्रॉस-चैनल बिट सहमति, और वेवलेट ऊर्जा पैटर्न का पता लगाता है। वीडियो के लिए, `ffmpeg` के माध्यम से स्वचालित रूप से कीफ़्रेम निकालकर व्यक्तिगत रूप से विश्लेषण करता है। जब कोई मेटाडेटा सिग्नल नहीं मिलता तो स्वचालित रूप से फ़ॉलबैक के रूप में चलता है, या `--deep` के साथ माँग पर चलता है।
 
+**दृश्य वॉटरमार्क (MEDIUM विश्वसनीयता)** — इमेज के चारों कोनों में दृश्य टेक्स्ट ओवरले का पता लगाता है (जैसे चीनी AI-जनित सामग्री प्रकटीकरण लेबल)। कोनों में छोटे टेक्स्ट बैज की पहचान के लिए चमक विश्लेषण और टेक्स्ट-पंक्ति पैटर्न पहचान का उपयोग करता है। अदृश्य वॉटरमार्क पहचान के साथ चलता है, केवल इमेज के लिए।
+
 ---
 
 ## 🎯 क्या पहचानता है
@@ -107,10 +109,10 @@ real_photo.jpg
 
 | श्रेणी | उपकरण |
 |--------|--------|
-| इमेज जनरेशन | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| वीडियो जनरेशन | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
-| ऑडियो/म्यूज़िक जनरेशन | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| मल्टीमोडल | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| इमेज जनरेशन | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| वीडियो जनरेशन | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
+| ऑडियो/म्यूज़िक जनरेशन | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
+| मल्टीमोडल | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | प्लेटफ़ॉर्म | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | इंटरफ़ेस | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | रिसर्च | Glide, Parti, Muse, Seedream, Recraft |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |--------|--------|
 | `--json` | JSON प्रारूप में आउटपुट |
 | `-q, --quiet` | आउटपुट दबाएं, केवल एग्ज़िट कोड सेट करें |
-| `--deep` | सभी फ़ाइलों पर अदृश्य वॉटरमार्क और ऑडियो स्पेक्ट्रल विश्लेषण बाध्य करें |
 | `--no-color` | रंगीन आउटपुट अक्षम करें |
+| `--lang <LANG>` | प्रदर्शन भाषा बदलें (en, zh-CN, de, ja, ko, hi, es) |
+
+### Check विकल्प
+
+| विकल्प | प्रभाव |
+|--------|--------|
+| `-r, --recursive` | डायरेक्टरी को रिकर्सिव रूप से स्कैन करें |
+| `--deep` | सभी फ़ाइलों पर अदृश्य वॉटरमार्क और ऑडियो स्पेक्ट्रल विश्लेषण बाध्य करें |
+| `--min-confidence <LEVEL>` | विश्वसनीयता के अनुसार फ़िल्टर (low, medium, high; डिफ़ॉल्ट: low) |
 
 ### एग्ज़िट कोड
 

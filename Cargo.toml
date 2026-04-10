@@ -22,7 +22,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1"
-c2pa = { version = "0.77", features = ["file_io"] }
+c2pa = { version = "0.77", features = ["file_io", "pdf"] }
 clap = { version = "4", features = ["derive"] }
 colored = "2"
 image = { version = "0.24", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp", "tiff"] }

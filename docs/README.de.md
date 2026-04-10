@@ -19,7 +19,7 @@
 
 AICheck beantwortet diese Fragen durch Analyse von Datei-Metadaten und unsichtbaren Wasserzeichen. Keine API-Keys, kein Netzwerk, keine Einrichtung.
 
-**10 Erkennungsmethoden** · **76 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
+**11 Erkennungsmethoden** · **62 KI-Tools** · **16 Dateiformate** · **3 Konfidenzstufen** · **Null Netzwerkanfragen**
 
 ![Demo](demo-en.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   Metadaten-Signale gefunden?              Keine Signale?
         |                                          |
         v                                          v
-   [ Ergebnis ]         [ Unsichtbares Wasserzeichen / Audio-Spektral ]
-                          DWT-DCT- oder FFT-Analyse
-                          Konfidenz: LOW
+   [ Ergebnis ]   [ Unsichtb. / Sichtb. Wasserzeichen / Audio-Spektral ]
+                    DWT-DCT / Luminanz / FFT-Analyse
+                    Konfidenz: LOW–MEDIUM
                                        |
                                        v
                                   [ Ergebnis ]
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### Erkennungsmethoden
 
-**C2PA-Manifeste (HIGH Konfidenz)** — Kryptografisch signierte Herkunftsnachweise. Wenn ein C2PA-Manifest sagt „hergestellt von DALL-E", ist das das autoritativste Signal, das Metadaten liefern können. Liest `digitalSourceType` und `claim_generator`. Funktioniert mit Bildern, Videos und Audio (z.B. ElevenLabs).
+**C2PA-Manifeste (HIGH Konfidenz)** — Kryptografisch signierte Herkunftsnachweise. Wenn ein C2PA-Manifest sagt „hergestellt von DALL-E", ist das das autoritativste Signal, das Metadaten liefern können. Liest `digitalSourceType`, `claim_generator` und `claim_generator_info`. Kann spezifische KI-Tools aus Herstellerkennungen im Claim-Generator ableiten (z.B. Google → Google AI). Funktioniert mit Bildern, Videos und Audio (z.B. ElevenLabs).
 
-**XMP/IPTC-Metadaten (MEDIUM Konfidenz)** — Standard-Foto-Metadaten: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Zuverlässig, aber nicht signiert — kann gefälscht oder entfernt werden.
+**XMP/IPTC-Metadaten (MEDIUM Konfidenz)** — Standard-Foto-Metadaten: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`, `Credit` (z.B. Google AIs `photoshop:Credit`). Zuverlässig, aber nicht signiert — kann gefälscht oder entfernt werden.
 
-**MP4-Container-Metadaten (MEDIUM Konfidenz)** — Analysiert iTunes-Stil-Atome (`©too`, `©swr`), AIGC-Labels (chinesischer Standard mit JSON `ProduceID`) und H.264-SEI-Wasserzeichenmarker (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). Erkennt auch nicht-KI-Erstellungssoftware (FFmpeg, Remotion, Premiere usw.) zur informativen Anzeige. Erfasst KI-Signale, die in Videocontainern eingebettet sind und von anderen Methoden übersehen werden.
+**MP4-Container-Metadaten (MEDIUM Konfidenz)** — Analysiert iTunes-Stil-Atome (`©too`, `©swr`), AIGC-Labels (chinesischer Standard mit JSON `ProduceID` und `ContentProducer` Unternehmens-ID → Tool-Zuordnung, z.B. Wan-Videos) und H.264-SEI-Wasserzeichenmarker (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). Erkennt auch nicht-KI-Erstellungssoftware (FFmpeg, Remotion, Premiere usw.) zur informativen Anzeige. Erfasst KI-Signale, die in Videocontainern eingebettet sind und von anderen Methoden übersehen werden.
 
 **ID3-Audio-Metadaten (MEDIUM Konfidenz)** — Liest ID3v2-Tags aus MP3-Dateien: Kommentarframes (COMM), URL-Frames (WOAS/WOAF/WXXX) und Textframes (TENC/TPUB/TXXX). Erkennt KI-Audioplattformen wie Suno (über eingebettete URLs und „made with suno"-Kommentare).
 
 **WAV-Container-Metadaten (MEDIUM/LOW Konfidenz)** — Analysiert RIFF-LIST/INFO-Blöcke (ISFT, ICMT, IART) auf Verweise zu KI-Tools. Kennzeichnet außerdem TTS-typische Audioeigenschaften: Mono-Kanal + nicht-standardmäßige Abtastraten (16kHz, 22050Hz, 24000Hz).
 
-**EXIF-Heuristiken (LOW Konfidenz)** — Wenn das `Software`-Tag mit einem bekannten KI-Tool übereinstimmt UND typische Kamerafelder (Make, Model, GPS, Brennweite) fehlen, ist es wahrscheinlich KI-generiert. Erkennt auch hash-artige Artist-Tags.
+**EXIF-Heuristiken (LOW–MEDIUM Konfidenz)** — Wenn das `Software`-Tag mit einem bekannten KI-Tool übereinstimmt UND typische Kamerafelder (Make, Model, GPS, Brennweite) fehlen, ist es wahrscheinlich KI-generiert. Erkennt auch hash-artige Artist-Tags. Zusätzlich werden AIGC-JSON-Labels aus `UserComment` analysiert (z.B. Qianfan-Qwen-Bilder), wobei `ContentProducer`-Unternehmens-ID-Präfixe auf spezifische Tools abgebildet werden (MEDIUM Konfidenz).
 
 **PNG-Textblöcke (LOW Konfidenz)** — Durchsucht `tEXt`- und `iTXt`-Blöcke nach KI-Tool-Verweisen in den Schlüsselwörtern Software, Comment, Description, Source, Author, parameters und prompt.
 
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **Unsichtbare Wasserzeichen (LOW Konfidenz)** — Pixelbasierte DWT-DCT-Analyse, die Kanalrauschen-Asymmetrie, kanalübergreifende Bit-Übereinstimmung und Wavelet-Energiemuster erkennt. Bei Videos werden automatisch Keyframes über `ffmpeg` extrahiert und einzeln analysiert. Läuft automatisch als Fallback, wenn keine Metadaten-Signale gefunden werden, oder auf Anforderung mit `--deep`.
 
+**Sichtbare Wasserzeichen (MEDIUM Konfidenz)** — Erkennt sichtbare Texteinblendungen in Bildecken (z.B. chinesische KI-Inhaltskennzeichnungslabels). Nutzt Luminanzanalyse und Textzeilenmustererkennung zur Identifikation kleiner Textabzeichen in Ecken. Läuft zusammen mit der unsichtbaren Wasserzeichenerkennung, nur für Bilder.
+
 ---
 
 ## 🎯 Erkannte Inhalte
@@ -107,10 +109,10 @@ real_photo.jpg
 
 | Kategorie | Tools |
 |-----------|-------|
-| Bildgenerierung | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| Videogenerierung | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
-| Audio-/Musikgenerierung | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| Bildgenerierung | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| Videogenerierung | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
+| Audio-/Musikgenerierung | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
+| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | Plattformen | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Oberflächen | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | Forschung | Glide, Parti, Muse, Seedream, Recraft |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |--------|---------|
 | `--json` | Ausgabe als JSON |
 | `-q, --quiet` | Ausgabe unterdrücken, nur Exit-Code setzen |
-| `--deep` | Unsichtbare Wasserzeichen- und Audio-Spektralanalyse für alle Dateien erzwingen |
 | `--no-color` | Farbige Ausgabe deaktivieren |
+| `--lang <LANG>` | Anzeigesprache überschreiben (en, zh-CN, de, ja, ko, hi, es) |
+
+### Check-Optionen
+
+| Option | Wirkung |
+|--------|---------|
+| `-r, --recursive` | Verzeichnisse rekursiv durchsuchen |
+| `--deep` | Unsichtbare Wasserzeichen- und Audio-Spektralanalyse für alle Dateien erzwingen |
+| `--min-confidence <LEVEL>` | Nach Konfidenzstufe filtern (low, medium, high; Standard: low) |
 
 ### Exit-Codes
 

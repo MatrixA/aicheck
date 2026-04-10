@@ -19,7 +19,7 @@
 
 AICheck responde estas preguntas analizando los metadatos de archivos y marcas de agua invisibles. Sin API keys, sin red, sin configuración.
 
-**10 métodos de detección** · **76 herramientas de IA** · **16 formatos de archivo** · **3 niveles de confianza** · **Cero peticiones de red**
+**11 métodos de detección** · **62 herramientas de IA** · **16 formatos de archivo** · **3 niveles de confianza** · **Cero peticiones de red**
 
 ![Demo](demo-en.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   ¿señales de metadatos?                   ¿sin señales?
         |                                          |
         v                                          v
-   [ Veredicto ]          [ Marca de agua invisible / Análisis espectral ]
-                            Análisis DWT-DCT o FFT
-                            confianza: LOW
+   [ Veredicto ]   [ Marca de agua invisible / visible / Espectral ]
+                     Análisis DWT-DCT / luminancia / FFT
+                     confianza: LOW–MEDIUM
                                        |
                                        v
                                  [ Veredicto ]
@@ -79,17 +79,17 @@ real_photo.jpg
 
 ### Métodos de Detección
 
-**Manifiestos C2PA (confianza HIGH)** — Procedencia con firma criptográfica. Si un manifiesto C2PA dice "hecho por DALL-E", esa es la señal más autoritativa que los metadatos pueden proporcionar. Lee `digitalSourceType` y `claim_generator`. Funciona con imágenes, videos y audio (ej. ElevenLabs).
+**Manifiestos C2PA (confianza HIGH)** — Procedencia con firma criptográfica. Si un manifiesto C2PA dice "hecho por DALL-E", esa es la señal más autoritativa que los metadatos pueden proporcionar. Lee `digitalSourceType`, `claim_generator` y `claim_generator_info`. Puede inferir herramientas de IA específicas a partir de identificadores de proveedor en el generador de claims (ej. Google → Google AI). Funciona con imágenes, videos y audio (ej. ElevenLabs).
 
-**Metadatos XMP/IPTC (confianza MEDIUM)** — Metadatos fotográficos estándar: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`. Fiables pero sin firma — pueden ser falsificados o eliminados.
+**Metadatos XMP/IPTC (confianza MEDIUM)** — Metadatos fotográficos estándar: `DigitalSourceType`, `AISystemUsed`, `AIPromptInformation`, `CreatorTool`, `Credit` (ej. `photoshop:Credit` de Google AI). Fiables pero sin firma — pueden ser falsificados o eliminados.
 
-**Metadatos de contenedor MP4 (confianza MEDIUM)** — Analiza átomos estilo iTunes (`©too`, `©swr`), etiquetas AIGC (estándar chino con JSON `ProduceID`) y marcadores de marca de agua SEI H.264 (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). También detecta software de creación no-IA (FFmpeg, Remotion, Premiere, etc.) para visualización informativa. Captura señales de IA integradas en contenedores de video que otros métodos no detectan.
+**Metadatos de contenedor MP4 (confianza MEDIUM)** — Analiza átomos estilo iTunes (`©too`, `©swr`), etiquetas AIGC (estándar chino con JSON `ProduceID` y `ContentProducer` ID empresarial → mapeo de herramientas, ej. videos Wan) y marcadores de marca de agua SEI H.264 (Kling, Sora, Runway, Pika, Luma, Hailuo, Pixverse, Vidu, Genmo, Haiper). También detecta software de creación no-IA (FFmpeg, Remotion, Premiere, etc.) para visualización informativa. Captura señales de IA integradas en contenedores de video que otros métodos no detectan.
 
 **Metadatos de audio ID3 (confianza MEDIUM)** — Lee etiquetas ID3v2 de archivos MP3: marcos de comentario (COMM), marcos de URL (WOAS/WOAF/WXXX) y marcos de texto (TENC/TPUB/TXXX). Detecta plataformas de audio IA como Suno (mediante URLs incrustadas y comentarios "made with suno").
 
 **Metadatos de contenedor WAV (confianza MEDIUM/LOW)** — Analiza bloques RIFF LIST/INFO (ISFT, ICMT, IART) en busca de referencias a herramientas de IA. También marca características de audio típicas de TTS: canal mono + frecuencias de muestreo no estándar (16kHz, 22050Hz, 24000Hz).
 
-**Heurísticas EXIF (confianza LOW)** — Si la etiqueta `Software` coincide con una herramienta de IA conocida Y faltan campos típicos de cámara (Make, Model, GPS, distancia focal), probablemente es generado por IA. También detecta etiquetas Artist con formato hash.
+**Heurísticas EXIF (confianza LOW–MEDIUM)** — Si la etiqueta `Software` coincide con una herramienta de IA conocida Y faltan campos típicos de cámara (Make, Model, GPS, distancia focal), probablemente es generado por IA. También detecta etiquetas Artist con formato hash. Además, analiza etiquetas JSON AIGC incrustadas en `UserComment` (ej. imágenes Qianfan Qwen), mapeando prefijos de ID empresarial `ContentProducer` a herramientas específicas (confianza MEDIUM).
 
 **Bloques de texto PNG (confianza LOW)** — Escanea bloques `tEXt` e `iTXt` en busca de referencias a herramientas de IA en las palabras clave Software, Comment, Description, Source, Author, parameters y prompt.
 
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **Marcas de agua invisibles (confianza LOW)** — Análisis DWT-DCT a nivel de píxel que detecta asimetría de ruido entre canales, concordancia de bits entre canales y patrones de energía wavelet. Para videos, extrae automáticamente fotogramas clave mediante `ffmpeg` y los analiza individualmente. Se ejecuta automáticamente como respaldo cuando no se encuentran señales de metadatos, o bajo demanda con `--deep`.
 
+**Marcas de agua visibles (confianza MEDIUM)** — Detecta superposiciones de texto visibles en las esquinas de imágenes (ej. etiquetas de divulgación de contenido IA chinas). Utiliza análisis de luminancia y detección de patrones de líneas de texto para identificar pequeñas insignias de texto en las esquinas. Se ejecuta junto con la detección de marcas de agua invisibles, solo para imágenes.
+
 ---
 
 ## 🎯 Qué Reconoce
@@ -107,10 +109,10 @@ real_photo.jpg
 
 | Categoría | Herramientas |
 |-----------|-------------|
-| Generación de imágenes | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦) |
-| Generación de video | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper |
-| Generación de audio/música | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
-| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini |
+| Generación de imágenes | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
+| Generación de video | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
+| Generación de audio/música | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
+| Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | Plataformas | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Interfaces | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
 | Investigación | Glide, Parti, Muse, Seedream, Recraft |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |--------|--------|
 | `--json` | Salida en formato JSON |
 | `-q, --quiet` | Suprimir salida, solo establecer código de salida |
-| `--deep` | Forzar análisis de marca de agua invisible y espectral de audio en todos los archivos |
 | `--no-color` | Desactivar salida con colores |
+| `--lang <LANG>` | Cambiar idioma de visualización (en, zh-CN, de, ja, ko, hi, es) |
+
+### Opciones de Check
+
+| Opción | Efecto |
+|--------|--------|
+| `-r, --recursive` | Escanear directorios recursivamente |
+| `--deep` | Forzar análisis de marca de agua invisible y espectral de audio en todos los archivos |
+| `--min-confidence <LEVEL>` | Filtrar por nivel de confianza (low, medium, high; por defecto: low) |
 
 ### Códigos de Salida
 

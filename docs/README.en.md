@@ -19,7 +19,7 @@
 
 AICheck answers these questions by analyzing file metadata and invisible watermarks. No API keys, no network, no setup.
 
-**10 detection methods** · **76 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
+**11 detection methods** · **62 AI tools** · **16 file formats** · **3 confidence tiers** · **Zero network requests**
 
 ![Demo](demo-en.gif)
 
@@ -69,9 +69,9 @@ real_photo.jpg
   metadata signals found?                    no signals?
         |                                          |
         v                                          v
-   [ Verdict ]              [ Invisible Watermark / Audio Spectral ]
-                              DWT-DCT or FFT analysis
-                              confidence: LOW
+   [ Verdict ]        [ Invisible / Visible Watermark / Audio Spectral ]
+                        DWT-DCT / luminance / FFT analysis
+                        confidence: LOW–MEDIUM
                                        |
                                        v
                                   [ Verdict ]
@@ -99,6 +99,8 @@ real_photo.jpg
 
 **Invisible Watermarks (LOW confidence)** — Pixel-level DWT-DCT analysis that detects channel noise asymmetry, cross-channel bit agreement, and wavelet energy patterns. For videos, automatically extracts keyframes via `ffmpeg` and analyzes them individually. Runs automatically as a fallback when no metadata signals are found, or on demand with `--deep`.
 
+**Visible Watermarks (MEDIUM confidence)** — Detects visible text overlays in image corner regions (e.g. Chinese AI-generated content disclosure labels). Uses luminance analysis and text-line pattern detection to identify small text badges in corners. Runs alongside invisible watermark detection, images only.
+
 ---
 
 ## 🎯 What It Recognizes
@@ -109,7 +111,7 @@ real_photo.jpg
 |----------|-------|
 | Image generation | DALL-E, Midjourney, Stable Diffusion, Adobe Firefly, Imagen, Flux, Ideogram, Leonardo.ai, NovelAI, Grok, Jimeng (即梦), Qwen (通义万相) |
 | Video generation | Sora, Google Veo, Runway, Pika, Kling, Vidu, Luma, Hailuo (海螺), Pixverse, Genmo, Haiper, Wan |
-| Audio/Music generation | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Beatoven, Soundful, Hume, Fish Audio |
+| Audio/Music generation | Suno, Udio, ElevenLabs, SoundRaw, AIVA, Boomy, Mubert, Loudly, Beatoven, Soundful, Hume, Fish Audio |
 | Multimodal | GPT-4o, GPT-4, ChatGPT, OpenAI, GPT Image, Gemini, Google AI |
 | Platforms | Bing Image Creator, Copilot Designer, Microsoft Designer, Canva AI, DreamStudio, NightCafe, Craiyon, DeepAI, Meta AI, Stability AI |
 | Interfaces | ComfyUI, Automatic1111 (A1111), InvokeAI, Fooocus |
@@ -155,8 +157,16 @@ aic info photo.jpg
 |------|--------|
 | `--json` | Output as JSON |
 | `-q, --quiet` | Suppress output, set exit code only |
-| `--deep` | Force invisible watermark and audio spectral analysis on all files |
 | `--no-color` | Disable colored output |
+| `--lang <LANG>` | Override display language (en, zh-CN, de, ja, ko, hi, es) |
+
+### Check Options
+
+| Flag | Effect |
+|------|--------|
+| `-r, --recursive` | Recurse into directories |
+| `--deep` | Force invisible watermark and audio spectral analysis on all files |
+| `--min-confidence <LEVEL>` | Filter by confidence level (low, medium, high; default: low) |
 
 ### Exit Codes
 
