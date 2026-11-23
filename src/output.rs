@@ -103,6 +103,15 @@ pub fn print_human(reports: &[FileReport]) {
                 i18n::t("output_attribution_label", &[]),
                 parts.join(" / ").green()
             );
+            if let Some(status) = attr.c2pa_validation.as_deref() {
+                let text = c2pa_status_text(status);
+                let colored = match status {
+                    "trusted" => text.green(),
+                    "invalid" => text.red(),
+                    _ => text.yellow(),
+                };
+                line.push_str(&format!(" {}", colored));
+            }
             if let (Some(field), Some(raw)) = (&attr.evidence_field, &attr.raw_value) {
                 line.push_str(&format!(" ({}={})", field, raw).dimmed().to_string());
             }
@@ -160,6 +169,18 @@ pub fn print_human(reports: &[FileReport]) {
             .bold()
         );
     }
+}
+
+/// Human-readable C2PA trust status shown next to an attribution, e.g.
+/// `[C2PA valid_untrusted: declared by the manifest, signer not trusted]`.
+fn c2pa_status_text(status: &str) -> String {
+    let key = match status {
+        "trusted" => "attribution_c2pa_trusted",
+        "valid_untrusted" => "attribution_c2pa_untrusted",
+        "invalid" => "attribution_c2pa_invalid",
+        _ => "attribution_c2pa_valid",
+    };
+    format!("[C2PA {}: {}]", status, i18n::t(key, &[]))
 }
 
 pub fn print_json(reports: &[FileReport]) {
@@ -282,5 +303,22 @@ pub fn print_info(
         && wm_signals.is_empty()
     {
         println!("{}", i18n::t("info_no_metadata", &[]).dimmed());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn c2pa_status_text_distinguishes_trust() {
+        i18n::init_locale(Some("en"));
+        let trusted = c2pa_status_text("trusted");
+        let untrusted = c2pa_status_text("valid_untrusted");
+        let invalid = c2pa_status_text("invalid");
+        assert!(trusted.contains("trusted") && trusted.contains("signer trusted"));
+        assert!(untrusted.contains("valid_untrusted") && untrusted.contains("not trusted"));
+        assert!(invalid.contains("invalid"));
+        assert_ne!(trusted, untrusted);
     }
 }

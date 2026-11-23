@@ -75,3 +75,7 @@ signal_xmp_aigc_label: "XMP-TC260-AIGC-Kennzeichnung weist auf KI-generierte Inh
 signal_mp4_raw_marker: "Nicht verifizierter Byte-Marker in mdat: %{marker}"
 verdict_heuristic_only: "nur heuristische Signale – keine eingebettete KI-Deklaration"
 output_attribution_label: "Zuordnung"
+attribution_c2pa_trusted: "Signierer vertrauenswürdig"
+attribution_c2pa_untrusted: "vom Manifest deklariert, Signierer nicht vertrauenswürdig"
+attribution_c2pa_valid: "Signatur gültig, Vertrauen nicht geprüft"
+attribution_c2pa_invalid: "Signatur ungültig"

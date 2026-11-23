@@ -183,3 +183,57 @@ fn clean_file_has_no_evidence() {
     let v = check_json("tests/fixtures/real_photo.jpg");
     assert_eq!(file(&v)["evidence_level"], "none");
 }
+
+// --- C2PA trust status travels with the attribution ---
+
+#[test]
+fn untrusted_c2pa_model_attribution_reports_validation() {
+    let v = check_json("tests/fixtures/attr_gpt_image_2.png");
+    let a = &file(&v)["attribution"];
+    assert_eq!(a["model"], "gpt-image-2");
+    assert_eq!(a["c2pa_validation"], "valid_untrusted");
+}
+
+#[test]
+fn untrusted_c2pa_status_shown_next_to_model_in_cli() {
+    let out = cargo_bin_cmd!("aic")
+        .args([
+            "--lang",
+            "en",
+            "check",
+            "tests/fixtures/attr_gpt_image_2.png",
+        ])
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let line = stdout
+        .lines()
+        .find(|l| l.contains("Attribution:"))
+        .expect("attribution line");
+    assert!(line.contains("gpt-image-2"));
+    assert!(line.contains("[C2PA valid_untrusted: declared by the manifest, signer not trusted]"));
+}
+
+#[test]
+fn non_c2pa_attribution_has_no_validation() {
+    let v = check_json("tests/fixtures/attr_minimax_h3_image.jpeg");
+    let a = &file(&v)["attribution"];
+    assert_eq!(a["tool"], "minimax");
+    assert!(a.get("c2pa_validation").is_none());
+
+    let out = cargo_bin_cmd!("aic")
+        .args([
+            "--lang",
+            "en",
+            "check",
+            "tests/fixtures/attr_minimax_h3_image.jpeg",
+        ])
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let line = stdout
+        .lines()
+        .find(|l| l.contains("Attribution:"))
+        .expect("attribution line");
+    assert!(!line.contains("C2PA"));
+}

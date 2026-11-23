@@ -75,3 +75,7 @@ signal_xmp_aigc_label: "XMP TC260 AIGC लेबल AI-जनित सामग
 signal_mp4_raw_marker: "mdat में असत्यापित बाइट मार्कर: %{marker}"
 verdict_heuristic_only: "केवल अनुमानित संकेत — कोई अंतर्निहित AI घोषणा नहीं"
 output_attribution_label: "श्रेय"
+attribution_c2pa_trusted: "हस्ताक्षरकर्ता विश्वसनीय"
+attribution_c2pa_untrusted: "मैनिफ़ेस्ट द्वारा घोषित, हस्ताक्षरकर्ता अविश्वसनीय"
+attribution_c2pa_valid: "हस्ताक्षर मान्य, विश्वसनीयता जाँची नहीं गई"
+attribution_c2pa_invalid: "हस्ताक्षर अमान्य"

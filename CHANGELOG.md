@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Model attribution from C2PA `c2pa.created` actions: Volcengine `parameters.model_name` (Seedream / Seedance backend IDs), OpenAI `softwareAgent.version` (`gpt-image-*`), BFL series, Luma and Ideogram backend versions, Kling vendor. Cross-checks `c2pa.ai-disclosure` and `com.ideogram.generation` in the same manifest.
 - `Signal` fields `model`, `scope`, `evidence_field`, `raw_value`, `evidence`; `FileReport` fields `attribution` and `evidence_level`; JSON summary counts `declared` / `heuristic_only`.
-- C2PA validation summary per signal (`invalid` / `valid_untrusted` / `valid` / `trusted`); ingredient manifests are marked and do not set the file's attribution scope.
+- C2PA validation summary per signal (`invalid` / `valid_untrusted` / `valid` / `trusted`), carried into `attribution.c2pa_validation` and shown next to the model in human output; ingredient manifests are marked and do not set the file's attribution scope.
 - TC260 AIGC labels in XMP (`http://www.tc260.org.cn/ns/AIGC/1.0/`, e.g. Qwen Image PNGs).
 - Shared AIGC label parser (EXIF, MP4, XMP) using structured JSON; producer mappings for MiniMax, Vidu, Kling; the shared Alibaba code maps to `wan` for videos and `qwen/wan` for images.
 

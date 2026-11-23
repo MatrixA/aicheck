@@ -152,6 +152,12 @@ pub struct Attribution {
     pub evidence_field: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub raw_value: Option<String>,
+    /// C2PA validation of the manifest this attribution came from:
+    /// `invalid`, `valid_untrusted`, `valid` or `trusted`. Absent when the
+    /// attribution is not from C2PA. A `valid_untrusted` model is what the
+    /// manifest declares, not a verified origin.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c2pa_validation: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -394,7 +400,83 @@ fn best_attribution(signals: &[Signal]) -> Option<Attribution> {
         model: s.model.clone(),
         evidence_field: s.evidence_field.clone(),
         raw_value: s.raw_value.clone(),
+        c2pa_validation: s
+            .details
+            .iter()
+            .find(|(k, _)| k == "c2pa_validation")
+            .map(|(_, v)| v.clone()),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn declared(source: SignalSource, scope: AttributionScope, validation: Option<&str>) -> Signal {
+        let mut b = SignalBuilder::new(source, Confidence::High, "signal_c2pa_model_declared")
+            .param("scope", scope.as_str())
+            .param("value", "m")
+            .tool("t")
+            .model("m")
+            .scope(scope);
+        if let Some(v) = validation {
+            b = b.detail("c2pa_validation", v);
+        }
+        b.build()
+    }
+
+    #[test]
+    fn attribution_carries_trusted_c2pa_validation() {
+        let s = vec![declared(
+            SignalSource::C2pa,
+            AttributionScope::ModelId,
+            Some("trusted"),
+        )];
+        let a = best_attribution(&s).unwrap();
+        assert_eq!(a.c2pa_validation.as_deref(), Some("trusted"));
+    }
+
+    #[test]
+    fn attribution_carries_untrusted_c2pa_validation() {
+        let s = vec![declared(
+            SignalSource::C2pa,
+            AttributionScope::ModelId,
+            Some("valid_untrusted"),
+        )];
+        let a = best_attribution(&s).unwrap();
+        assert_eq!(a.model.as_deref(), Some("m"));
+        assert_eq!(a.c2pa_validation.as_deref(), Some("valid_untrusted"));
+    }
+
+    #[test]
+    fn non_c2pa_attribution_has_no_validation() {
+        let s = vec![declared(
+            SignalSource::Exif,
+            AttributionScope::Provider,
+            None,
+        )];
+        let a = best_attribution(&s).unwrap();
+        assert!(a.c2pa_validation.is_none());
+        let json = serde_json::to_value(&a).unwrap();
+        assert!(json.get("c2pa_validation").is_none());
+    }
+
+    #[test]
+    fn validation_follows_the_selected_signal() {
+        // The finer C2PA model wins over a coarser EXIF provider and brings
+        // its own validation state.
+        let s = vec![
+            declared(SignalSource::Exif, AttributionScope::Provider, None),
+            declared(
+                SignalSource::C2pa,
+                AttributionScope::ModelId,
+                Some("valid_untrusted"),
+            ),
+        ];
+        let a = best_attribution(&s).unwrap();
+        assert_eq!(a.scope, AttributionScope::ModelId);
+        assert_eq!(a.c2pa_validation.as_deref(), Some("valid_untrusted"));
+    }
 }
 
 impl FileReport {

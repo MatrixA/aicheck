@@ -81,7 +81,7 @@ real_photo.jpg
 
 **C2PA 清单（HIGH 置信度）**— 经过加密签名的来源证明。如果 C2PA 清单写着「由 DALL-E 生成」，这就是元数据能提供的最权威证据。读取 `digitalSourceType`、`claim_generator` 和 `claim_generator_info` 字段。能通过 `claim_generator` 中的厂商标识（如 Google）推断具体 AI 工具。支持图片、视频和音频（如 ElevenLabs）。
 
-**模型归因** — C2PA 按文件内容嗅探出的格式读取，不依赖后缀，因此后缀写成 `.png` 的 JPEG 也能读到清单。从当前清单的 `c2pa.created` 动作中提取厂商字段：火山引擎 `parameters.model_name`（如 `doubao-seedream-5-0`）、OpenAI `softwareAgent.version`（如 `gpt-image-2`）、BFL 系列（`FLUX.2`）、Luma 后端（`Uni-1.1`）、Ideogram 后端（`V_4_0`）和 Kling 厂商。每份报告带有 `attribution`：`scope`（`model_id` › `backend` › `series` › `provider` › `ai_only`）、证据位置 `evidence_field` 和原值 `raw_value`。C2PA 信号附带 `c2pa_validation`（`invalid`、`valid_untrusted`、`valid`、`trusted`）；签名无效的清单不产生模型归因，素材（ingredient）清单不决定当前文件的归因粒度。
+**模型归因** — C2PA 按文件内容嗅探出的格式读取，不依赖后缀，因此后缀写成 `.png` 的 JPEG 也能读到清单。从当前清单的 `c2pa.created` 动作中提取厂商字段：火山引擎 `parameters.model_name`（如 `doubao-seedream-5-0`）、OpenAI `softwareAgent.version`（如 `gpt-image-2`）、BFL 系列（`FLUX.2`）、Luma 后端（`Uni-1.1`）、Ideogram 后端（`V_4_0`）和 Kling 厂商。每份报告带有 `attribution`：`scope`（`model_id` › `backend` › `series` › `provider` › `ai_only`）、证据位置 `evidence_field`、原值 `raw_value`，以及来自 C2PA 时该清单的 `c2pa_validation`（人类可读输出中显示在模型名旁，避免把未受信签名者声明的模型当成已验证来源）。C2PA 信号附带 `c2pa_validation`（`invalid`、`valid_untrusted`、`valid`、`trusted`）；签名无效的清单不产生模型归因，素材（ingredient）清单不决定当前文件的归因粒度。
 
 **证据等级** — 每个信号标注 `evidence: declaration`（结构化元数据）或 `evidence: heuristic`（像素水印统计、角标、频谱、文件名、未经结构验证的字节标记）。报告新增 `evidence_level`（`declared` / `heuristic` / `none`）；仅有启发式线索的结果会在输出中注明，且不给出厂商归因。`ai_generated` 保持原含义以兼容旧客户端。
 
