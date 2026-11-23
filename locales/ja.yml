@@ -14,7 +14,7 @@ confidence_high: "高"
 # 出力UI
 output_no_signals: "AI生成シグナルは検出されませんでした。"
 output_hint_check_original: "ヒント：SNSやメッセージアプリはアップロード時にメタデータを削除することがあります。最良の結果を得るには、オリジナルファイルを分析してください。"
-output_summary: "結果：%{detected}/%{total} ファイルにAIシグナルあり（%{high} 高、%{medium} 中、%{low} 低）"
+output_summary: "結果：%{detected}/%{total} ファイルで AI 信号を検出（高 %{high}、中 %{medium}、低 %{low}；宣言あり %{declared}、ヒューリスティックのみ %{heuristic}）"
 output_type_label: "タイプ：%{mime}"
 
 # 情報セクションヘッダー
@@ -70,3 +70,12 @@ signal_wav_tts_heuristic: "音声特性がTTSを示唆：モノラル %{rate}Hz 
 signal_video_frame_watermark: "動画フレームの電子透かし指標を検出（%{frame}時点）：%{indicators}"
 signal_visible_watermark_badge: "%{corner}コーナーに可視AIウォーターマークバッジを検出（%{indicators}）"
 signal_visible_watermark_generic: "%{corner}コーナーに可視テキストオーバーレイを検出（ウォーターマークの可能性）"
+signal_c2pa_model_declared: "C2PA が %{scope} を宣言：%{value}"
+signal_xmp_aigc_label: "XMP TC260 AIGC ラベルが AI 生成コンテンツを示しています"
+signal_mp4_raw_marker: "mdat 内の未検証バイトマーカー：%{marker}"
+verdict_heuristic_only: "ヒューリスティックな信号のみ（埋め込まれた AI 宣言なし）"
+output_attribution_label: "帰属"
+attribution_c2pa_trusted: "署名者は信頼済み"
+attribution_c2pa_untrusted: "マニフェストの自己申告、署名者は未信頼"
+attribution_c2pa_valid: "署名は有効、署名者の信頼は未確認"
+attribution_c2pa_invalid: "署名が無効"

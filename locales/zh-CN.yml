@@ -14,7 +14,7 @@ confidence_high: "高"
 # 输出界面
 output_no_signals: "未检测到 AI 生成信号。"
 output_hint_check_original: "提示：社交媒体和通讯应用上传时通常会清除元数据。建议检查原始文件以获得最佳检测效果。"
-output_summary: "结果：%{detected}/%{total} 个文件检测到 AI 信号（%{high} 高、%{medium} 中、%{low} 低）"
+output_summary: "结果：%{detected}/%{total} 个文件检测到 AI 信号（%{high} 高、%{medium} 中、%{low} 低；%{declared} 个有结构化声明，%{heuristic} 个仅有启发式线索）"
 output_type_label: "类型：%{mime}"
 
 # 信息区段标题
@@ -70,3 +70,12 @@ signal_wav_tts_heuristic: "音频特征表明为 TTS：单声道 %{rate}Hz %{bit
 signal_video_frame_watermark: "视频帧水印指标检测到（位于 %{frame}）：%{indicators}"
 signal_visible_watermark_badge: "在%{corner}角检测到可见AI水印标识（%{indicators}）"
 signal_visible_watermark_generic: "在%{corner}角检测到可见文字覆盖层（可能为水印）"
+signal_c2pa_model_declared: "C2PA 声明 %{scope}：%{value}"
+signal_xmp_aigc_label: "XMP TC260 AIGC 标签表明内容为 AI 生成"
+signal_mp4_raw_marker: "mdat 中未经结构验证的字节标记：%{marker}"
+verdict_heuristic_only: "仅有启发式线索，文件内无 AI 声明"
+output_attribution_label: "归因"
+attribution_c2pa_trusted: "签名者受信任"
+attribution_c2pa_untrusted: "清单自述，签名者未受信任"
+attribution_c2pa_valid: "签名有效，未检查签名者信任"
+attribution_c2pa_invalid: "签名无效"

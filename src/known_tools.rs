@@ -83,12 +83,36 @@ pub const AI_TOOL_PATTERNS: &[&str] = &[
 
 /// Check if a string contains any known AI tool pattern (case-insensitive).
 /// Returns the matched tool name if found.
+///
+/// ASCII patterns must match on word boundaries (the neighbouring characters
+/// must not be ASCII letters or digits), so short names such as "wan", "veo"
+/// or "udio" do not fire inside unrelated words ("swan", "audio").
 pub fn match_ai_tool(text: &str) -> Option<&'static str> {
     let lower = text.to_lowercase();
     AI_TOOL_PATTERNS
         .iter()
-        .find(|&&pattern| lower.contains(pattern))
+        .find(|&&pattern| contains_word(&lower, pattern))
         .copied()
+}
+
+fn contains_word(haystack: &str, pattern: &str) -> bool {
+    if !pattern.is_ascii() {
+        return haystack.contains(pattern);
+    }
+    let bytes = haystack.as_bytes();
+    let mut from = 0;
+    while let Some(rel) = haystack[from..].find(pattern) {
+        let start = from + rel;
+        let end = start + pattern.len();
+        let before_ok = start == 0 || !bytes[start - 1].is_ascii_alphanumeric();
+        let after_ok = end == bytes.len() || !bytes[end].is_ascii_alphanumeric();
+        if before_ok && after_ok {
+            return true;
+        }
+        // Advance by one character (keep UTF-8 boundaries).
+        from = start + haystack[start..].chars().next().map_or(1, |c| c.len_utf8());
+    }
+    false
 }
 
 #[cfg(test)]
@@ -106,5 +130,18 @@ mod tests {
         assert_eq!(match_ai_tool("Made with Google AI"), Some("google ai"));
         assert_eq!(match_ai_tool("Wan 2.6"), Some("wan"));
         assert_eq!(match_ai_tool("Qwen VL Image"), Some("qwen"));
+        assert_eq!(match_ai_tool("Adobe_Firefly"), Some("firefly"));
+        assert_eq!(match_ai_tool("doubao-seedream-4-0"), Some("seedream"));
+        assert_eq!(match_ai_tool("kling-ai"), Some("kling"));
+    }
+
+    #[test]
+    fn test_word_boundaries() {
+        assert_eq!(match_ai_tool("gpt-4o-audio-preview"), Some("gpt-4o"));
+        assert_eq!(match_ai_tool("Black swan photo"), None);
+        assert_eq!(match_ai_tool("Lavf60 audio"), None);
+        assert_eq!(match_ai_tool("Developer settings"), None);
+        assert_eq!(match_ai_tool("Museum guide"), None);
+        assert_eq!(match_ai_tool("即梦AI"), Some("即梦"));
     }
 }

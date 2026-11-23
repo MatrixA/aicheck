@@ -147,6 +147,7 @@ pub fn detect(path: &Path) -> Result<Vec<Signal>> {
             .detail("channels", fmt.channels.to_string())
             .detail("sample_rate", format!("{}Hz", fmt.sample_rate))
             .detail("bits_per_sample", fmt.bits_per_sample.to_string())
+            .heuristic()
             .build(),
         );
     }

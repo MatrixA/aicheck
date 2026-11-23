@@ -14,7 +14,7 @@ confidence_high: "ALTO"
 # Interfaz de salida
 output_no_signals: "No se detectaron señales de generación por IA."
 output_hint_check_original: "Consejo: Las redes sociales y apps de mensajería suelen eliminar los metadatos al subir archivos. Para mejores resultados, analice el archivo original."
-output_summary: "Resultados: %{detected}/%{total} archivos con señales de IA (%{high} ALTO, %{medium} MEDIO, %{low} BAJO)"
+output_summary: "Resultados: %{detected}/%{total} archivos con señales de IA (%{high} ALTA, %{medium} MEDIA, %{low} BAJA; %{declared} declarados, %{heuristic} solo heurísticos)"
 output_type_label: "Tipo: %{mime}"
 
 # Encabezados de secciones
@@ -70,3 +70,12 @@ signal_wav_tts_heuristic: "Características de audio sugieren TTS: mono %{rate}H
 signal_video_frame_watermark: "Indicadores de marca de agua detectados en fotograma de video (en %{frame}): %{indicators}"
 signal_visible_watermark_badge: "Insignia de marca de agua de IA visible detectada en esquina %{corner} (%{indicators})"
 signal_visible_watermark_generic: "Superposición de texto visible detectada en esquina %{corner} (posible marca de agua)"
+signal_c2pa_model_declared: "C2PA declara %{scope}: %{value}"
+signal_xmp_aigc_label: "La etiqueta XMP TC260 AIGC indica contenido generado por IA"
+signal_mp4_raw_marker: "Marcador de bytes no verificado en mdat: %{marker}"
+verdict_heuristic_only: "solo señales heurísticas: sin declaración de IA incrustada"
+output_attribution_label: "Atribución"
+attribution_c2pa_trusted: "firmante de confianza"
+attribution_c2pa_untrusted: "declarado por el manifiesto, firmante no confiable"
+attribution_c2pa_valid: "firma válida, confianza del firmante no comprobada"
+attribution_c2pa_invalid: "firma no válida"

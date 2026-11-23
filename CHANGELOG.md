@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Model attribution from C2PA `c2pa.created` actions: Volcengine `parameters.model_name` (Seedream / Seedance backend IDs), OpenAI `softwareAgent.version` (`gpt-image-*`), BFL series, Luma and Ideogram backend versions, Kling vendor. Cross-checks `c2pa.ai-disclosure` and `com.ideogram.generation` in the same manifest.
+- `Signal` fields `model`, `scope`, `evidence_field`, `raw_value`, `evidence`; `FileReport` fields `attribution` and `evidence_level`; JSON summary counts `declared` / `heuristic_only`.
+- C2PA validation summary per signal (`invalid` / `valid_untrusted` / `valid` / `trusted`), carried into `attribution.c2pa_validation` and shown next to the model in human output; ingredient manifests are marked and do not set the file's attribution scope.
+- TC260 AIGC labels in XMP (`http://www.tc260.org.cn/ns/AIGC/1.0/`, e.g. Qwen Image PNGs).
+- Shared AIGC label parser (EXIF, MP4, XMP) using structured JSON; producer mappings for MiniMax, Vidu, Kling; the shared Alibaba code maps to `wan` for videos and `qwen/wan` for images.
+
+### Fixed
+
+- C2PA manifests are read by sniffed content type instead of file extension: Seedream JPEGs saved as `.png` were reported as "no signals".
+- SEI markers are confirmed inside H.264/H.265 SEI NAL units; raw byte matches are downgraded to a low-confidence heuristic.
+- Known-tool matching uses word boundaries (e.g. `udio` no longer matches "audio", `wan` no longer matches "swan"); `claim_generator_info` is matched on name/version only.
+- Heuristic-only results (pixel watermark statistics, corner badges, TTS audio profile, filenames) are labelled as such and never produce a vendor attribution.
+
 ## [0.2.0] - 2026-03-13
 
 ### Added

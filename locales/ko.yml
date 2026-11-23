@@ -14,7 +14,7 @@ confidence_high: "높음"
 # 출력 UI
 output_no_signals: "AI 생성 신호가 감지되지 않았습니다."
 output_hint_check_original: "팁: 소셜 미디어와 메신저 앱은 업로드 시 메타데이터를 제거하는 경우가 많습니다. 최상의 결과를 위해 원본 파일을 분석하세요."
-output_summary: "결과: %{detected}/%{total} 파일에서 AI 신호 감지 (%{high} 높음, %{medium} 중간, %{low} 낮음)"
+output_summary: "결과: %{detected}/%{total}개 파일에서 AI 신호 감지 (높음 %{high}, 중간 %{medium}, 낮음 %{low}; 선언 %{declared}, 휴리스틱만 %{heuristic})"
 output_type_label: "유형: %{mime}"
 
 # 정보 섹션 헤더
@@ -70,3 +70,12 @@ signal_wav_tts_heuristic: "오디오 특성이 TTS를 시사: 모노 %{rate}Hz %
 signal_video_frame_watermark: "비디오 프레임 워터마크 지표 감지 (%{frame} 위치): %{indicators}"
 signal_visible_watermark_badge: "%{corner} 모서리에서 가시적 AI 워터마크 배지 감지 (%{indicators})"
 signal_visible_watermark_generic: "%{corner} 모서리에서 가시적 텍스트 오버레이 감지 (워터마크 가능성)"
+signal_c2pa_model_declared: "C2PA가 %{scope} 선언: %{value}"
+signal_xmp_aigc_label: "XMP TC260 AIGC 레이블이 AI 생성 콘텐츠를 나타냄"
+signal_mp4_raw_marker: "mdat의 검증되지 않은 바이트 마커: %{marker}"
+verdict_heuristic_only: "휴리스틱 신호만 있음 — 내장된 AI 선언 없음"
+output_attribution_label: "귀속"
+attribution_c2pa_trusted: "서명자 신뢰됨"
+attribution_c2pa_untrusted: "매니페스트 자체 선언, 서명자 신뢰되지 않음"
+attribution_c2pa_valid: "서명 유효, 서명자 신뢰 미확인"
+attribution_c2pa_invalid: "서명 무효"

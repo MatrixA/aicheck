@@ -14,7 +14,7 @@ confidence_high: "HIGH"
 # Output UI
 output_no_signals: "No AI-generation signals detected."
 output_hint_check_original: "Tip: Social media and messaging apps often strip metadata on upload. For best results, analyze the original file."
-output_summary: "Results: %{detected}/%{total} files with AI signals (%{high} HIGH, %{medium} MEDIUM, %{low} LOW)"
+output_summary: "Results: %{detected}/%{total} files with AI signals (%{high} HIGH, %{medium} MEDIUM, %{low} LOW; %{declared} declared, %{heuristic} heuristic-only)"
 output_type_label: "Type: %{mime}"
 
 # Info headers
@@ -70,3 +70,12 @@ signal_wav_tts_heuristic: "Audio characteristics suggest TTS: mono %{rate}Hz %{b
 signal_video_frame_watermark: "Video frame watermark indicators detected (at %{frame}): %{indicators}"
 signal_visible_watermark_badge: "Visible AI watermark badge detected in %{corner} corner (%{indicators})"
 signal_visible_watermark_generic: "Visible text overlay detected in %{corner} corner (possible watermark)"
+signal_c2pa_model_declared: "C2PA declares %{scope}: %{value}"
+signal_xmp_aigc_label: "XMP TC260 AIGC label indicates AI-generated content"
+signal_mp4_raw_marker: "Unverified byte marker in mdat: %{marker}"
+verdict_heuristic_only: "heuristic signals only — no embedded AI declaration"
+output_attribution_label: "Attribution"
+attribution_c2pa_trusted: "signer trusted"
+attribution_c2pa_untrusted: "declared by the manifest, signer not trusted"
+attribution_c2pa_valid: "signature valid, signer trust not checked"
+attribution_c2pa_invalid: "signature invalid"

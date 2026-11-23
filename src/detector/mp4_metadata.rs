@@ -2,16 +2,11 @@ use anyhow::Result;
 use std::fs;
 use std::path::Path;
 
-use super::{Confidence, Signal, SignalBuilder, SignalSource};
+use super::{aigc, AttributionScope, Confidence, Signal, SignalBuilder, SignalSource};
 use crate::known_tools;
 
 const MP4_TOOL_MAPPINGS: &[(&str, &str, Confidence)] =
     &[("google", "google veo", Confidence::Medium)];
-
-/// AIGC ContentProducer IDs mapped to tool names.
-/// These are empirically observed enterprise registration numbers,
-/// not officially published by the vendors.
-const AIGC_PRODUCER_MAPPINGS: &[(&str, &str)] = &[("001191330106MA2CFLDG4R10001", "wan")];
 
 const SEI_MARKERS: &[(&[u8], &str)] = &[
     (b"kling-ai", "kling"),
@@ -226,6 +221,8 @@ fn detect_ilst_tools(entries: &[(String, String)]) -> Vec<Signal> {
                 .param("label", label)
                 .param("value", value.as_str())
                 .tool(tool_name)
+                .scope(AttributionScope::Provider)
+                .evidence_at(format!("MP4.{}", key), value.as_str())
                 .detail(key.as_str(), value.as_str())
                 .build(),
             );
@@ -243,6 +240,8 @@ fn detect_ilst_tools(entries: &[(String, String)]) -> Vec<Signal> {
                     .param("label", label)
                     .param("value", value.as_str())
                     .tool(mapped_tool)
+                    .scope(AttributionScope::Provider)
+                    .evidence_at(format!("MP4.{}", key), value.as_str())
                     .detail(key.as_str(), value.as_str())
                     .build(),
                 );
@@ -259,56 +258,84 @@ fn detect_aigc_label(entries: &[(String, String)]) -> Vec<Signal> {
         if !key.eq_ignore_ascii_case("AIGC") {
             continue;
         }
-        let has_ai_label = value.contains("\"Label\":\"1\"") || value.contains("\"Label\": \"1\"");
-        if !has_ai_label {
+        let Some(label) = aigc::parse(value).filter(|l| l.is_ai()) else {
             continue;
-        }
-        let produce_id = extract_json_field(value, "ProduceID");
-        let content_producer = extract_json_field(value, "ContentProducer");
-        let tool = content_producer.as_deref().and_then(|cp| {
-            AIGC_PRODUCER_MAPPINGS
-                .iter()
-                .find(|(id, _)| cp == *id)
-                .map(|(_, tool)| tool.to_string())
-        });
-        let signal = if let Some(ref pid) = produce_id {
+        };
+        let attr = aigc::attribute(&label, aigc::MediaKind::Video);
+        let builder = if let Some(ref pid) = label.produce_id {
             SignalBuilder::new(
                 SignalSource::Mp4Metadata,
                 Confidence::Medium,
                 "signal_mp4_aigc_label_id",
             )
             .param("id", pid.as_str())
-            .tool_opt(tool)
-            .detail("AIGC", value.as_str())
-            .detail("ProduceID", pid.as_str())
-            .build()
         } else {
             SignalBuilder::new(
                 SignalSource::Mp4Metadata,
                 Confidence::Medium,
                 "signal_mp4_aigc_label",
             )
-            .tool_opt(tool)
-            .detail("AIGC", value.as_str())
-            .build()
         };
-        signals.push(signal);
+        let mut builder = builder
+            .tool_opt(attr.tool.map(str::to_string))
+            .scope(attr.scope)
+            .evidence_at(format!("MP4.AIGC.{}", attr.field), attr.raw_value)
+            .detail("AIGC", value.as_str());
+        if let Some(ref pid) = label.produce_id {
+            builder = builder.detail("ProduceID", pid.as_str());
+        }
+        if let Some(ref prop) = label.content_propagator {
+            builder = builder.detail("ContentPropagator", prop.as_str());
+        }
+        signals.push(builder.build());
     }
     signals
 }
 
-fn extract_json_field(json: &str, field: &str) -> Option<String> {
-    let pattern = format!("\"{}\"", field);
-    let idx = json.find(&pattern)?;
-    let after = &json[idx + pattern.len()..];
-    let after = after.trim_start();
-    let after = after.strip_prefix(':')?;
-    let after = after.trim_start();
-    let after = after.strip_prefix('"')?;
-    let end = after.find('"')?;
-    Some(after[..end].to_string())
+/// True if this NAL header byte is an SEI unit in H.264 (type 6) or
+/// H.265 (prefix/suffix SEI, types 39/40).
+fn is_sei_nal(header: u8, next: Option<u8>) -> bool {
+    let h264 = header & 0x80 == 0 && header & 0x1F == 6;
+    let hevc_type = (header >> 1) & 0x3F;
+    let hevc = header & 0x80 == 0
+        && (hevc_type == 39 || hevc_type == 40)
+        // HEVC second header byte: nuh_temporal_id_plus1 must be non-zero.
+        && next.map(|b| b & 0x07 != 0).unwrap_or(false);
+    h264 || hevc
 }
 
+/// Walk length-prefixed (AVCC/HVCC, 4-byte) NAL units from `start` and return
+/// the byte ranges of SEI payloads. Stops at the first implausible length,
+/// e.g. when an interleaved audio chunk is reached.
+fn sei_payload_ranges(data: &[u8], start: usize, end: usize) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut pos = start;
+    while pos + 5 <= end {
+        let len = match read_u32_be(data, pos) {
+            Some(l) => l as usize,
+            None => break,
+        };
+        if len == 0 || pos + 4 + len > end {
+            break;
+        }
+        let header = data[pos + 4];
+        if header & 0x80 != 0 {
+            // forbidden_zero_bit set: not a NAL stream.
+            break;
+        }
+        let next = data.get(pos + 5).copied();
+        if is_sei_nal(header, next) {
+            ranges.push((pos + 4, pos + 4 + len));
+        }
+        pos += 4 + len;
+    }
+    ranges
+}
+
+/// Detect vendor markers inside video SEI NAL units. Markers found in SEI
+/// payloads are reported as declarations; markers only found as raw bytes in
+/// the first MiB of `mdat` (structure not verified) are reported as low
+/// confidence heuristics.
 fn detect_sei_markers(data: &[u8]) -> Vec<Signal> {
     let mut signals = Vec::new();
     let mdat = match get_box(data, 0, data.len(), b"mdat") {
@@ -316,10 +343,14 @@ fn detect_sei_markers(data: &[u8]) -> Vec<Signal> {
         None => return signals,
     };
     let scan_end = mdat.1.min(mdat.0 + 1_048_576);
+    let sei_ranges = sei_payload_ranges(data, mdat.0, mdat.1.min(mdat.0 + 16 * 1_048_576));
     let scan_data = &data[mdat.0..scan_end];
     for &(marker, tool_name) in SEI_MARKERS {
-        if scan_data.windows(marker.len()).any(|w| w == marker) {
-            let marker_str = String::from_utf8_lossy(marker);
+        let marker_str = String::from_utf8_lossy(marker);
+        let in_sei = sei_ranges
+            .iter()
+            .any(|&(s, e)| data[s..e].windows(marker.len()).any(|w| w == marker));
+        if in_sei {
             signals.push(
                 SignalBuilder::new(
                     SignalSource::Mp4Metadata,
@@ -328,7 +359,22 @@ fn detect_sei_markers(data: &[u8]) -> Vec<Signal> {
                 )
                 .param("marker", &*marker_str)
                 .tool(tool_name)
+                .scope(AttributionScope::Provider)
+                .evidence_at("MP4.SEI", &*marker_str)
                 .detail("SEI marker", &*marker_str)
+                .build(),
+            );
+        } else if scan_data.windows(marker.len()).any(|w| w == marker) {
+            signals.push(
+                SignalBuilder::new(
+                    SignalSource::Mp4Metadata,
+                    Confidence::Low,
+                    "signal_mp4_raw_marker",
+                )
+                .param("marker", &*marker_str)
+                .tool(tool_name)
+                .detail("mdat marker (unverified)", &*marker_str)
+                .heuristic()
                 .build(),
             );
         }
@@ -432,23 +478,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_extract_json_field() {
-        let json = r#"{"Label":"1","ProduceID":"abc-123","Other":"val"}"#;
-        assert_eq!(extract_json_field(json, "Label"), Some("1".to_string()));
-        assert_eq!(
-            extract_json_field(json, "ProduceID"),
-            Some("abc-123".to_string())
-        );
-        assert_eq!(extract_json_field(json, "Missing"), None);
-        let json2 = r#"{"Label": "1", "ProduceID": "xyz"}"#;
-        assert_eq!(extract_json_field(json2, "Label"), Some("1".to_string()));
-        assert_eq!(
-            extract_json_field(json2, "ProduceID"),
-            Some("xyz".to_string())
-        );
-    }
-
-    #[test]
     fn test_detect_ilst_tools_known_tool() {
         let entries = vec![("\u{a9}too".to_string(), "Runway Gen-3".to_string())];
         let signals = detect_ilst_tools(&entries);
@@ -508,6 +537,71 @@ mod tests {
         )];
         let signals = detect_aigc_label(&entries);
         assert!(signals.is_empty());
+    }
+
+    #[test]
+    fn test_detect_aigc_label_field_order_and_whitespace() {
+        let a = vec![(
+            "AIGC".to_string(),
+            r#"{"Label":"1","ContentProducer":"001191110108MACC4D63XF10306"}"#.to_string(),
+        )];
+        let b = vec![(
+            "AIGC".to_string(),
+            r#"{ "ContentProducer" : "001191110108MACC4D63XF10306" , "Label" : "1" }"#.to_string(),
+        )];
+        let sa = detect_aigc_label(&a);
+        let sb = detect_aigc_label(&b);
+        assert_eq!(sa[0].tool, Some("vidu".to_string()));
+        assert_eq!(sa[0].tool, sb[0].tool);
+        assert_eq!(sa[0].scope, Some(AttributionScope::Provider));
+    }
+
+    #[test]
+    fn test_detect_aigc_label_minimax_and_unknown() {
+        let e = vec![(
+            "AIGC".to_string(),
+            r#"{"AIGC":{"Label":"1","ContentProducer":"MiniMax"}}"#.to_string(),
+        )];
+        assert_eq!(detect_aigc_label(&e)[0].tool, Some("minimax".to_string()));
+        let e = vec![(
+            "AIGC".to_string(),
+            r#"{"Label":"1","ContentPropagator":"someone"}"#.to_string(),
+        )];
+        let s = detect_aigc_label(&e);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].tool, None);
+        assert_eq!(s[0].scope, Some(AttributionScope::AiOnly));
+    }
+
+    #[test]
+    fn test_sei_marker_requires_sei_nal() {
+        // mdat with one H.264 SEI NAL containing "kling-ai".
+        let payload = b"\x06\x05kling-ai-payload";
+        let mut mdat = Vec::new();
+        mdat.extend_from_slice(&(payload.len() as u32).to_be_bytes());
+        mdat.extend_from_slice(payload);
+        let mut file = Vec::new();
+        file.extend_from_slice(&((mdat.len() + 8) as u32).to_be_bytes());
+        file.extend_from_slice(b"mdat");
+        file.extend_from_slice(&mdat);
+        let s = detect_sei_markers(&file);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].confidence, Confidence::Medium);
+        assert_eq!(s[0].tool, Some("kling".to_string()));
+
+        // Same bytes in a non-SEI NAL (IDR slice, type 5) are only a heuristic.
+        let payload = b"\x65\x05kling-ai-payload";
+        let mut mdat = Vec::new();
+        mdat.extend_from_slice(&(payload.len() as u32).to_be_bytes());
+        mdat.extend_from_slice(payload);
+        let mut file = Vec::new();
+        file.extend_from_slice(&((mdat.len() + 8) as u32).to_be_bytes());
+        file.extend_from_slice(b"mdat");
+        file.extend_from_slice(&mdat);
+        let s = detect_sei_markers(&file);
+        assert_eq!(s.len(), 1);
+        assert_eq!(s[0].confidence, Confidence::Low);
+        assert_eq!(s[0].evidence, crate::detector::EvidenceKind::Heuristic);
     }
 
     #[test]
