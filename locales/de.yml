@@ -14,7 +14,7 @@ confidence_high: "HOCH"
 # Ausgabe
 output_no_signals: "Keine KI-Generierungssignale erkannt."
 output_hint_check_original: "Tipp: Soziale Medien und Messaging-Apps entfernen beim Hochladen häufig Metadaten. Analysieren Sie für beste Ergebnisse die Originaldatei."
-output_summary: "Ergebnisse: %{detected}/%{total} Dateien mit KI-Signalen (%{high} HOCH, %{medium} MITTEL, %{low} NIEDRIG)"
+output_summary: "Ergebnis: %{detected}/%{total} Dateien mit KI-Signalen (%{high} HOCH, %{medium} MITTEL, %{low} NIEDRIG; %{declared} deklariert, %{heuristic} nur heuristisch)"
 output_type_label: "Typ: %{mime}"
 
 # Info-Überschriften
@@ -70,3 +70,8 @@ signal_wav_tts_heuristic: "Audioeigenschaften deuten auf TTS hin: Mono %{rate}Hz
 signal_video_frame_watermark: "Wasserzeichen-Indikatoren in Videobild erkannt (bei %{frame}): %{indicators}"
 signal_visible_watermark_badge: "Sichtbares KI-Wasserzeichen-Badge in %{corner} Ecke erkannt (%{indicators})"
 signal_visible_watermark_generic: "Sichtbare Textüberlagerung in %{corner} Ecke erkannt (möglicherweise Wasserzeichen)"
+signal_c2pa_model_declared: "C2PA deklariert %{scope}: %{value}"
+signal_xmp_aigc_label: "XMP-TC260-AIGC-Kennzeichnung weist auf KI-generierte Inhalte hin"
+signal_mp4_raw_marker: "Nicht verifizierter Byte-Marker in mdat: %{marker}"
+verdict_heuristic_only: "nur heuristische Signale – keine eingebettete KI-Deklaration"
+output_attribution_label: "Zuordnung"

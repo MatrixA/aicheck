@@ -1,7 +1,7 @@
 use colored::Colorize;
 use serde::Serialize;
 
-use aicheck::detector::{Confidence, FileReport};
+use aicheck::detector::{Confidence, EvidenceLevel, FileReport};
 use aicheck::i18n;
 
 #[derive(Serialize)]
@@ -17,6 +17,10 @@ struct Summary {
     high: usize,
     medium: usize,
     low: usize,
+    /// Files with at least one structured AI declaration.
+    declared: usize,
+    /// Files whose signals are all heuristics (watermark statistics, badges, ...).
+    heuristic_only: usize,
 }
 
 fn make_summary(reports: &[FileReport]) -> Summary {
@@ -34,6 +38,14 @@ fn make_summary(reports: &[FileReport]) -> Summary {
         low: reports
             .iter()
             .filter(|r| r.overall_confidence == Confidence::Low)
+            .count(),
+        declared: reports
+            .iter()
+            .filter(|r| r.evidence_level == EvidenceLevel::Declared)
+            .count(),
+        heuristic_only: reports
+            .iter()
+            .filter(|r| r.evidence_level == EvidenceLevel::Heuristic)
             .count(),
     }
 }
@@ -78,6 +90,25 @@ pub fn print_human(reports: &[FileReport]) {
             println!();
         }
 
+        if let Some(attr) = &report.attribution {
+            let mut parts = vec![attr.scope.as_str().to_string()];
+            if let Some(tool) = &attr.tool {
+                parts.push(tool.clone());
+            }
+            if let Some(model) = &attr.model {
+                parts.push(model.clone());
+            }
+            let mut line = format!(
+                "  {}: {}",
+                i18n::t("output_attribution_label", &[]),
+                parts.join(" / ").green()
+            );
+            if let (Some(field), Some(raw)) = (&attr.evidence_field, &attr.raw_value) {
+                line.push_str(&format!(" ({}={})", field, raw).dimmed().to_string());
+            }
+            println!("{}", line);
+        }
+
         // Verdict
         let verdict = if report.ai_generated {
             let label = match report.overall_confidence {
@@ -86,10 +117,19 @@ pub fn print_human(reports: &[FileReport]) {
                 Confidence::Low => i18n::t("verdict_possibly_ai", &[]).blue(),
                 Confidence::None => i18n::t("verdict_unknown", &[]).dimmed(),
             };
-            format!(
-                "  Verdict: {} (confidence: {})",
-                label, report.overall_confidence
-            )
+            if report.evidence_level == EvidenceLevel::Heuristic {
+                format!(
+                    "  Verdict: {} (confidence: {}; {})",
+                    label,
+                    report.overall_confidence,
+                    i18n::t("verdict_heuristic_only", &[])
+                )
+            } else {
+                format!(
+                    "  Verdict: {} (confidence: {})",
+                    label, report.overall_confidence
+                )
+            }
         } else {
             format!(
                 "  Verdict: {}",
@@ -113,6 +153,8 @@ pub fn print_human(reports: &[FileReport]) {
                     ("high", &summary.high.to_string()),
                     ("medium", &summary.medium.to_string()),
                     ("low", &summary.low.to_string()),
+                    ("declared", &summary.declared.to_string()),
+                    ("heuristic", &summary.heuristic_only.to_string()),
                 ],
             )
             .bold()

@@ -49,14 +49,8 @@ fn cmd_check(args: &Cli, check_args: &cli::CheckArgs) -> ExitCode {
             let mut report = detector::run_all_detectors(f, check_args.deep);
             // Filter signals below min confidence
             report.signals.retain(|s| s.confidence >= min_confidence);
-            // Recompute overall confidence after filtering
-            report.overall_confidence = report
-                .signals
-                .iter()
-                .map(|s| s.confidence)
-                .max()
-                .unwrap_or(detector::Confidence::None);
-            report.ai_generated = report.overall_confidence > detector::Confidence::None;
+            // Recompute derived fields after filtering
+            report.recompute();
             report
         })
         .collect();

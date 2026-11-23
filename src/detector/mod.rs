@@ -1,3 +1,4 @@
+pub mod aigc;
 pub mod audio_spectral;
 pub mod c2pa_detector;
 pub mod exif;
@@ -74,6 +75,85 @@ impl std::fmt::Display for SignalSource {
     }
 }
 
+/// How fine-grained an attribution is, from most to least specific.
+///
+/// The scope only describes what the file itself declares; it never comes
+/// from the generation task or from the file name.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AttributionScope {
+    /// A specific model ID (e.g. `doubao-seedream-5-0`, `gpt-image-2`).
+    ModelId,
+    /// A backend / software version (e.g. Luma `Uni-1.1`, Ideogram `V_4_0`).
+    Backend,
+    /// A model series (e.g. `FLUX.2`).
+    Series,
+    /// A vendor or a producer code / candidate group.
+    Provider,
+    /// A generic "AI generated" declaration without vendor information.
+    AiOnly,
+}
+
+impl AttributionScope {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AttributionScope::ModelId => "model_id",
+            AttributionScope::Backend => "backend",
+            AttributionScope::Series => "series",
+            AttributionScope::Provider => "provider",
+            AttributionScope::AiOnly => "ai_only",
+        }
+    }
+}
+
+/// Whether a signal is a structured declaration embedded in the file or a
+/// statistical / visual heuristic.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceKind {
+    /// Structured metadata (C2PA, XMP, EXIF, MP4 tags, AIGC labels, ...).
+    Declaration,
+    /// Pixel statistics, corner badges, spectral analysis, file names, ...
+    Heuristic,
+}
+
+impl EvidenceKind {
+    fn default_for(source: SignalSource) -> Self {
+        match source {
+            SignalSource::Watermark | SignalSource::AudioSpectral | SignalSource::Filename => {
+                EvidenceKind::Heuristic
+            }
+            _ => EvidenceKind::Declaration,
+        }
+    }
+}
+
+/// Strongest kind of evidence found for a file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceLevel {
+    /// At least one structured AI declaration was found.
+    Declared,
+    /// Only heuristic signals were found (not a confirmed AI declaration).
+    Heuristic,
+    /// No signals.
+    None,
+}
+
+/// File-level attribution summary: the finest-grained declared attribution.
+#[derive(Debug, Clone, Serialize)]
+pub struct Attribution {
+    pub scope: AttributionScope,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub evidence_field: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_value: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Signal {
     pub source: SignalSource,
@@ -82,6 +162,20 @@ pub struct Signal {
     pub description: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool: Option<String>,
+    /// Specific model / version / series value declared by the file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// Attribution granularity supported by this signal.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<AttributionScope>,
+    /// Where the evidence was read from (e.g. `c2pa.created.parameters.model_name`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub evidence_field: Option<String>,
+    /// The raw value of `evidence_field`, unmodified.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raw_value: Option<String>,
+    /// Declaration vs heuristic.
+    pub evidence: EvidenceKind,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub details: Vec<(String, String)>,
     /// Translation key for localized output.
@@ -114,6 +208,11 @@ pub struct SignalBuilder {
     msg_key: String,
     msg_params: Vec<(String, String)>,
     tool: Option<String>,
+    model: Option<String>,
+    scope: Option<AttributionScope>,
+    evidence_field: Option<String>,
+    raw_value: Option<String>,
+    evidence: EvidenceKind,
     details: Vec<(String, String)>,
 }
 
@@ -125,8 +224,41 @@ impl SignalBuilder {
             msg_key: key.to_string(),
             msg_params: Vec::new(),
             tool: None,
+            model: None,
+            scope: None,
+            evidence_field: None,
+            raw_value: None,
+            evidence: EvidenceKind::default_for(source),
             details: Vec::new(),
         }
+    }
+
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.model = Some(model.into());
+        self
+    }
+
+    pub fn scope(mut self, scope: AttributionScope) -> Self {
+        self.scope = Some(scope);
+        self
+    }
+
+    pub fn scope_opt(mut self, scope: Option<AttributionScope>) -> Self {
+        self.scope = scope;
+        self
+    }
+
+    /// Record where the evidence came from and its raw value.
+    pub fn evidence_at(mut self, field: impl Into<String>, raw_value: impl Into<String>) -> Self {
+        self.evidence_field = Some(field.into());
+        self.raw_value = Some(raw_value.into());
+        self
+    }
+
+    /// Mark this signal as a heuristic (not a structured declaration).
+    pub fn heuristic(mut self) -> Self {
+        self.evidence = EvidenceKind::Heuristic;
+        self
     }
 
     pub fn param(mut self, name: &str, value: impl Into<String>) -> Self {
@@ -166,6 +298,11 @@ impl SignalBuilder {
             confidence: self.confidence,
             description,
             tool: self.tool,
+            model: self.model,
+            scope: self.scope,
+            evidence_field: self.evidence_field,
+            raw_value: self.raw_value,
+            evidence: self.evidence,
             details: self.details,
             msg_key: self.msg_key,
             msg_params: self.msg_params,
@@ -180,7 +317,14 @@ pub struct FileReport {
     pub mime_type: Option<String>,
     pub signals: Vec<Signal>,
     pub overall_confidence: Confidence,
+    /// Kept for backwards compatibility: true when any signal is present.
+    /// Use `evidence_level` to tell structured declarations from heuristics.
     pub ai_generated: bool,
+    /// Strongest kind of evidence: `declared`, `heuristic` or `none`.
+    pub evidence_level: EvidenceLevel,
+    /// Finest-grained attribution declared by the file, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attribution: Option<Attribution>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
     /// Detected creation software (informational, not AI-related).
@@ -190,23 +334,70 @@ pub struct FileReport {
 
 impl FileReport {
     pub fn from_signals(path: PathBuf, mime_type: Option<String>, signals: Vec<Signal>) -> Self {
-        let overall_confidence = signals
+        let mut report = FileReport {
+            path,
+            mime_type,
+            signals,
+            overall_confidence: Confidence::None,
+            ai_generated: false,
+            evidence_level: EvidenceLevel::None,
+            attribution: None,
+            error: None,
+            software_info: Vec::new(),
+        };
+        report.recompute();
+        report
+    }
+
+    /// Recompute the derived fields from `signals` (call after filtering).
+    pub fn recompute(&mut self) {
+        self.overall_confidence = self
+            .signals
             .iter()
             .map(|s| s.confidence)
             .max()
             .unwrap_or(Confidence::None);
-        let ai_generated = overall_confidence > Confidence::None;
-        FileReport {
-            path,
-            mime_type,
-            signals,
-            overall_confidence,
-            ai_generated,
-            error: None,
-            software_info: Vec::new(),
+        self.ai_generated = self.overall_confidence > Confidence::None;
+        self.evidence_level = if self
+            .signals
+            .iter()
+            .any(|s| s.evidence == EvidenceKind::Declaration)
+        {
+            EvidenceLevel::Declared
+        } else if self.signals.is_empty() {
+            EvidenceLevel::None
+        } else {
+            EvidenceLevel::Heuristic
+        };
+        self.attribution = best_attribution(&self.signals);
+    }
+}
+
+/// Pick the finest declared attribution among the signals. Heuristic signals
+/// never produce an attribution. Ties keep the first (highest-priority
+/// detector) signal.
+fn best_attribution(signals: &[Signal]) -> Option<Attribution> {
+    let mut best: Option<&Signal> = None;
+    for s in signals {
+        if s.evidence != EvidenceKind::Declaration {
+            continue;
+        }
+        let Some(scope) = s.scope else { continue };
+        match best.and_then(|b| b.scope) {
+            Some(b) if b <= scope => {}
+            _ => best = Some(s),
         }
     }
+    best.map(|s| Attribution {
+        scope: s.scope.unwrap_or(AttributionScope::AiOnly),
+        tool: s.tool.clone(),
+        model: s.model.clone(),
+        evidence_field: s.evidence_field.clone(),
+        raw_value: s.raw_value.clone(),
+    })
+}
 
+impl FileReport {
     #[allow(dead_code)]
     pub fn from_error(path: PathBuf, error: String) -> Self {
         FileReport {
@@ -215,6 +406,8 @@ impl FileReport {
             signals: vec![],
             overall_confidence: Confidence::None,
             ai_generated: false,
+            evidence_level: EvidenceLevel::None,
+            attribution: None,
             error: Some(error),
             software_info: Vec::new(),
         }

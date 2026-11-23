@@ -14,7 +14,7 @@ confidence_high: "उच्च"
 # आउटपुट UI
 output_no_signals: "कोई AI-जनन संकेत नहीं पाया गया।"
 output_hint_check_original: "सुझाव: सोशल मीडिया और मैसेजिंग ऐप्स अपलोड करते समय अक्सर मेटाडेटा हटा देते हैं। सर्वोत्तम परिणामों के लिए मूल फ़ाइल का विश्लेषण करें।"
-output_summary: "परिणाम: %{detected}/%{total} फ़ाइलों में AI संकेत (%{high} उच्च, %{medium} मध्यम, %{low} कम)"
+output_summary: "परिणाम: %{detected}/%{total} फ़ाइलों में AI संकेत (%{high} उच्च, %{medium} मध्यम, %{low} निम्न; %{declared} घोषित, %{heuristic} केवल अनुमानित)"
 output_type_label: "प्रकार: %{mime}"
 
 # जानकारी अनुभाग शीर्षक
@@ -70,3 +70,8 @@ signal_wav_tts_heuristic: "ऑडियो विशेषताएँ TTS क�
 signal_video_frame_watermark: "वीडियो फ़्रेम वॉटरमार्क संकेतक पाए गए (%{frame} पर): %{indicators}"
 signal_visible_watermark_badge: "%{corner} कोने में दृश्य AI वॉटरमार्क बैज पाया गया (%{indicators})"
 signal_visible_watermark_generic: "%{corner} कोने में दृश्य टेक्स्ट ओवरले पाया गया (वॉटरमार्क हो सकता है)"
+signal_c2pa_model_declared: "C2PA %{scope} घोषित करता है: %{value}"
+signal_xmp_aigc_label: "XMP TC260 AIGC लेबल AI-जनित सामग्री दर्शाता है"
+signal_mp4_raw_marker: "mdat में असत्यापित बाइट मार्कर: %{marker}"
+verdict_heuristic_only: "केवल अनुमानित संकेत — कोई अंतर्निहित AI घोषणा नहीं"
+output_attribution_label: "श्रेय"
